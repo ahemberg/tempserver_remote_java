@@ -2,13 +2,11 @@ package eu.alehem.tempserver.remote;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class TempQueue {
 
-    private List<Temperature> measurements = new ArrayList<>();
-    private Set<Temperature> measurementSet = new HashSet<>(); //More memory efficient? Faster. No order. But timestamps make it unnecessary? Temperatures will return in random order to server though
+    private Set<Temperature> measurementSet = new HashSet<>();
 
     private TempQueue() {
     }
@@ -21,23 +19,38 @@ public class TempQueue {
         return InstanceHolder.instance;
     }
 
-    public void addTemperature(Temperature temperature) {
-        measurements.add(temperature);
+    synchronized public void addTemperature(Temperature temperature) {
         measurementSet.add(temperature);
     }
 
-    public void removeTemperature(Temperature temperature) {
-        measurements.remove(temperature);
+    synchronized public void addTemperatures(Set<Temperature> temperatures) {
+        measurementSet.addAll(temperatures);
+    }
+
+    synchronized public void removeTemperature(Temperature temperature) {
         measurementSet.remove(temperature);
     }
 
-    public List<Temperature> getMeasurements() {
-        return measurements;
+    synchronized public void removeTemperatures(Set<Temperature> temperatures) {
+        measurementSet.remove(temperatures);
     }
 
-    public Set<Temperature> getMeasurementSet() {
+    synchronized public Set<Temperature> getMeasurementSet() {
         return measurementSet;
     }
 
+    synchronized public int getQueueLen() {
+        return measurementSet.size();
+    }
 
+    synchronized public Temperature getOne() {
+        return measurementSet.stream().findFirst().orElse(null);
+    }
+
+    synchronized public Set<Temperature> getN(int n) {
+        if (n > getQueueLen()) {
+            n = getQueueLen();
+        }
+        return new HashSet<>(new ArrayList<>(measurementSet).subList(0,n));
+    }
 }
