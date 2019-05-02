@@ -4,7 +4,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Test
@@ -58,6 +60,33 @@ public class TempQueueTest {
         queue.removeTemperature(firstFromQueue);
         Assert.assertEquals(firstFromQueue, first);
         Assert.assertSame(firstFromQueue, first);
+        Assert.assertEquals(queue.getQueueLen(), 0);
+    }
+
+    @Test
+    public void testRemoveElementsFromQueue() {
+        TempQueue queue = TempQueue.getInstance();
+
+        List<Temperature> temps = new ArrayList<>();
+        temps.add(new Temperature("1", 2.0, Instant.now()));
+        temps.add(new Temperature("2", 2.0, Instant.now()));
+        temps.add(new Temperature("3", 2.0, Instant.now()));
+        temps.add(new Temperature("4", 2.0, Instant.now()));
+        temps.add(new Temperature("5", 2.0, Instant.now()));
+        temps.add(new Temperature("6", 2.0, Instant.now()));
+        temps.add(new Temperature("7", 2.0, Instant.now()));
+        temps.add(new Temperature("8", 2.0, Instant.now()));
+        temps.add(new Temperature("9", 2.0, Instant.now()));
+        temps.add(new Temperature("10", 2.0, Instant.now()));
+
+        Set<Temperature> addToS = new HashSet<>(temps);
+        Set<Temperature> removeFromS = new HashSet<>(temps.subList(0,5));
+
+        queue.addTemperatures(addToS);
+        queue.removeTemperatures(removeFromS);
+
+        Assert.assertEquals(queue.getQueueLen(),5);
+        addToS.forEach(queue::removeTemperature);
         Assert.assertEquals(queue.getQueueLen(), 0);
     }
 

@@ -7,6 +7,7 @@ import java.util.Set;
 public class TempQueue {
 
     private Set<Temperature> measurementSet = new HashSet<>();
+    private boolean removeLock = false;
 
     private TempQueue() {
     }
@@ -28,11 +29,13 @@ public class TempQueue {
     }
 
     synchronized public void removeTemperature(Temperature temperature) {
+        if (removeLock) return;
         measurementSet.remove(temperature);
     }
 
     synchronized public void removeTemperatures(Set<Temperature> temperatures) {
-        measurementSet.remove(temperatures);
+        if (removeLock) return;
+        temperatures.forEach(measurementSet::remove);
     }
 
     synchronized public Set<Temperature> getMeasurementSet() {
@@ -52,5 +55,9 @@ public class TempQueue {
             n = getQueueLen();
         }
         return new HashSet<>(new ArrayList<>(measurementSet).subList(0,n));
+    }
+
+    synchronized public void setRemoveLock(boolean locked) {
+        this.removeLock = locked;
     }
 }

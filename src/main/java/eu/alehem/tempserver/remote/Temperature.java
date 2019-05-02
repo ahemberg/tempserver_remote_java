@@ -1,6 +1,10 @@
 package eu.alehem.tempserver.remote;
 
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 public class Temperature {
@@ -35,6 +39,12 @@ public class Temperature {
 
     public long getMeasurementTimeStamp() {
         return measurementTime.getEpochSecond();
+    }
+
+    public String getMeasurementTimeServerFormat() {
+        LocalDateTime ldt = LocalDateTime.ofInstant(measurementTime.truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC);
+        Timestamp current = Timestamp.valueOf(ldt);
+        return current.toString();
     }
 
     public void setMeasurementTime(Instant measurementTime) {

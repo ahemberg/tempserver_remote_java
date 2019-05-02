@@ -1,34 +1,35 @@
 package eu.alehem.tempserver.remote;
 
-import javax.xml.crypto.Data;
 import java.sql.SQLException;
 import java.util.Set;
 
 public class PersistanceHandler implements Runnable {
 
-    private final int MAX_QUEUE_LEN = 5;
-    private final int DELETE_THRESHOLD = 10;
-    private final int ADD_THRESHOLD = 2;
-    private final int BATCH_SIZE = 1;
+    private final int MAX_QUEUE_LEN = 100;
+    private final int DELETE_THRESHOLD = 1000;
+    private final int ADD_THRESHOLD = 30;
+    private final int BATCH_SIZE = 10;
+    private int entriesInDb;
 
     private TempQueue queue = TempQueue.getInstance();
 
     public PersistanceHandler() throws SQLException {
         DatabaseManager.createDataBaseIfNotExists();
+        entriesInDb = DatabaseManager.countMeasurementsInDb();
     }
-
-    //TODO: CHANGE TO BATCH NOT WORKLING NOW
 
     @Override
     public void run() {
         int queLen = queue.getQueueLen();
 
-        if (queLen < ADD_THRESHOLD) {
+        if (queLen < ADD_THRESHOLD && entriesInDb != 0) {
             System.out.println("PERSISTANCEHANDLER: Populating queue from db");
             try {
                 Set<Temperature> temperatures = DatabaseManager.getTemperatures(BATCH_SIZE);
                 queue.addTemperatures(temperatures);
                 DatabaseManager.deleteTemperatures(temperatures);
+                entriesInDb = DatabaseManager.countMeasurementsInDb();
+                System.out.println("PERSISTANCEHANDLER: Successfully populated from db. DB now has " + entriesInDb + " entries");
                 return;
             } catch (SQLException e) {
                 System.out.println("PERSISTANCEHANDLER: WARNING: failed to get temperatures from db");
@@ -54,14 +55,7 @@ public class PersistanceHandler implements Runnable {
 
     private boolean saveToDb(Set<Temperature> temperatures) {
         try {
-            temperatures.forEach(t -> {
-                try {
-                    DatabaseManager.insertTemperature(t);
-                } catch (SQLException e) {
-                    System.out.println("FAILED. This will cause issues see TODO"); //TODO FAILS Anyway. Check db
-                }
-            });
-            //DatabaseManager.insertTemperatures(temperatures);
+            DatabaseManager.insertTemperatures(temperatures);
         } catch (Throwable e) {
             System.out.println("PERSISTANCEHANDLER: Warning: Failed to save temperatures");
             return false;

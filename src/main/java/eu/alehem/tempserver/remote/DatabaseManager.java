@@ -1,9 +1,7 @@
 package eu.alehem.tempserver.remote;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class DatabaseManager {
@@ -33,7 +31,7 @@ public final class DatabaseManager {
         Connection c = DriverManager.getConnection(DATABASE_URL);
 
         String query = String.format(
-                "INSERT OR IGNORE INTO saved_temperatures(probe, temp, timestamp) VALUES(%s, %f, %d)",
+                "INSERT OR IGNORE INTO saved_temperatures(probe, temp, timestamp) VALUES('%s', %f, %d)",
                 temp.getProbeSerial(),
                 temp.getTemperature(),
                 temp.getMeasurementTimeStamp()
@@ -52,7 +50,7 @@ public final class DatabaseManager {
         Statement stmt = c.createStatement();
         for (Temperature temp: temperatures) {
             stmt.addBatch(String.format(
-                    "INSERT OR IGNORE INTO saved_temperatures(probe, temp, timestamp) VALUES(%s, %f, %d);",
+                    "INSERT OR IGNORE INTO saved_temperatures(probe, temp, timestamp) VALUES('%s', %f, %d);",
                     temp.getProbeSerial(),
                     temp.getTemperature(),
                     temp.getMeasurementTimeStamp()
@@ -111,13 +109,31 @@ public final class DatabaseManager {
 
         for (Temperature temperature: temperatures) {
             stmt.addBatch("DELETE FROM saved_temperatures " +
-                    "WHERE probe="+temperature.getProbeSerial() +
-                    "AND temp="+temperature.getTemperature() +
-                    "AND timestamp="+temperature.getMeasurementTimeStamp());
+                    "WHERE probe='"+temperature.getProbeSerial() + "'" +
+                    " AND temp="+temperature.getTemperature() +
+                    " AND timestamp="+temperature.getMeasurementTimeStamp());
         }
 
         stmt.executeBatch();
         stmt.close();
         c.close();
+    }
+
+    public static int countMeasurementsInDb() throws SQLException {
+        Connection c = DriverManager.getConnection(DATABASE_URL);
+
+        String query = "SELECT COUNT(*) FROM saved_temperatures";
+
+        Statement stmt = c.createStatement();
+        stmt.execute(query);
+        ResultSet res = stmt.getResultSet();
+
+        res.next();
+        int count = res.getInt("COUNT(*)");
+        res.close();
+        stmt.close();
+        c.close();
+
+        return count;
     }
 }
