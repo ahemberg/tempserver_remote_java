@@ -43,8 +43,8 @@ public class TempSender implements Runnable {
 
         try {
             ServerTemperatureResponse response = sendToServer(new Gson().toJson(postData));
-            LOGGER.info("SENDER: Got from server:");
-            LOGGER.info(new Gson().toJson(response));
+            //LOGGER.info("SENDER: Got from server:");
+            //LOGGER.info(new Gson().toJson(response));
             if (response.getServerStatus() == 1) {
                 LOGGER.info("SENDER: Server responded with OK");
                 List<TemperatureMeasurement>temperaturesSavedOnServer = response.getSavedTemperatures();
@@ -55,6 +55,10 @@ public class TempSender implements Runnable {
                     queue.setRemoveLock(false);
                     queue.removeTemperatures(temperatures);
                 }
+            } else {
+                LOGGER.warning("Server rejected transaction");
+                LOGGER.warning("Server status: "+response.getServerStatus());
+                LOGGER.warning("Server message: "+response.getServerMessage());
             }
         } catch (ServerCommsFailedException e) {
             LOGGER.info(e.getMessage());
@@ -64,8 +68,8 @@ public class TempSender implements Runnable {
 
     private ServerTemperatureResponse sendToServer(String jsonData) throws ServerCommsFailedException {
         try {
-            LOGGER.info("SENDER: Sending to server:");
-            LOGGER.info(jsonData);
+            LOGGER.info("SENDER: Sending to server");
+            //LOGGER.info(jsonData);
             HttpClient client = HttpClientBuilder.create().build();
             HttpPost httpPost = new HttpPost(serverAddress);
 
@@ -80,7 +84,8 @@ public class TempSender implements Runnable {
             }
             return result;
         } catch (Throwable t) {
-            t.printStackTrace();
+            LOGGER.warning("Failed to save temperature to server.");
+            //t.printStackTrace();
             throw new ServerCommsFailedException();
         }
     }
@@ -88,6 +93,6 @@ public class TempSender implements Runnable {
 
 class ServerCommsFailedException extends Exception {
     ServerCommsFailedException() {
-        super("Server communication failed");
+        super("ERROR: Server communication failed");
     }
 }

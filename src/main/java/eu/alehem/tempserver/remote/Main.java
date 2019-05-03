@@ -23,12 +23,12 @@ public class Main {
 
         ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
         exec.scheduleAtFixedRate(tempReaderThread, 0, 2, TimeUnit.MINUTES);
-        exec.scheduleAtFixedRate(persistenceHandlerThread, 3, 5, TimeUnit.SECONDS);
-        exec.scheduleAtFixedRate(senderThread, 11, 10, TimeUnit.SECONDS);
+        exec.scheduleAtFixedRate(persistenceHandlerThread, 3, 30, TimeUnit.SECONDS);
+        exec.scheduleAtFixedRate(senderThread, 11, 30, TimeUnit.SECONDS);
 
         while (true) {
             LOGGER.info("Queue size: " + queue.getQueueLen());
-            LOGGER.info("Entries in db: " + DatabaseManager.getTemperatures(99999));
+            LOGGER.info("Entries in db: " + DatabaseManager.countMeasurementsInDb());
             Thread.sleep(10000);
         }
     }

@@ -8,10 +8,10 @@ public class PersistenceHandler implements Runnable {
 
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    private final int MAX_QUEUE_LEN = 1000;
+    private final int MAX_QUEUE_LEN = 60;
     private final int DELETE_THRESHOLD = 10000;
-    private final int ADD_THRESHOLD = 30;
-    private final int BATCH_SIZE = 100;
+    private final int ADD_THRESHOLD = 10;
+    private final int BATCH_SIZE = 10;
     private int entriesInDb;
 
     private TempQueue queue = TempQueue.getInstance();
@@ -35,7 +35,7 @@ public class PersistenceHandler implements Runnable {
                 LOGGER.info("PERSISTENCEHANDLER: Successfully populated from db. DB now has " + entriesInDb + " entries");
                 return;
             } catch (SQLException e) {
-                LOGGER.info("PERSISTENCEHANDLER: WARNING: failed to get temperatures from db");
+                LOGGER.warning("PERSISTENCEHANDLER: WARNING: failed to get temperatures from db");
                 return;
             }
         }
@@ -50,9 +50,16 @@ public class PersistenceHandler implements Runnable {
         }
 
         if (queLen > DELETE_THRESHOLD) {
-            LOGGER.info("PERSISTENCEHANDLER: WARNING: QUEUE is too long, will start to delete entries");
+            LOGGER.warning("PERSISTENCEHANDLER: WARNING: QUEUE is too long, will start to delete entries");
             Set<Temperature> temperatures = queue.getN(BATCH_SIZE);
             temperatures.forEach(t -> queue.removeTemperature(t));
+        }
+
+        //TODO: This implies a database read on every run. No writes though so maybe OK
+        try {
+            entriesInDb = DatabaseManager.countMeasurementsInDb(); //TODO: Convoluted and hard to read.
+        } catch(SQLException e) {
+            LOGGER.warning("Failed to count elements in database");
         }
     }
 
@@ -60,7 +67,7 @@ public class PersistenceHandler implements Runnable {
         try {
             DatabaseManager.insertTemperatures(temperatures);
         } catch (Throwable e) {
-            LOGGER.info("PERSISTENCEHANDLER: Warning: Failed to save temperatures");
+            LOGGER.warning("PERSISTENCEHANDLER: Warning: Failed to save temperatures");
             return false;
         }
         return true;
