@@ -7,15 +7,19 @@ import com.pi4j.io.w1.W1Master;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TempReader implements Runnable {
+
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     private TempQueue queue = TempQueue.getInstance();
     private List<W1Device> probes = getTempProbes();
 
     @Override
     public void run() {
+        LOGGER.info("Reading temperatures");
         probes.stream()
                 .map(this::getTemperature)
                 .collect(Collectors.toList())

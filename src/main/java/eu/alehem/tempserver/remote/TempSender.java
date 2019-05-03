@@ -1,37 +1,26 @@
 package eu.alehem.tempserver.remote;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import org.apache.commons.codec.Charsets;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TempSender implements Runnable {
 
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private TempQueue queue = TempQueue.getInstance();
-    private final int BATCH_SIZE = 50;
+    private final int BATCH_SIZE = 100;
     private final String mySerial = "000000001938eb39"; //TODO FIX THIS
     private final int myID = 6; //TODO FIX THIS;
     private final String serverAddress = "https://alehem.eu/api/save_temp"; //TODO FIX THIS
@@ -54,29 +43,29 @@ public class TempSender implements Runnable {
 
         try {
             ServerTemperatureResponse response = sendToServer(new Gson().toJson(postData));
-            System.out.println("SENDER: Got from server:");
-            System.out.println(new Gson().toJson(response));
+            LOGGER.info("SENDER: Got from server:");
+            LOGGER.info(new Gson().toJson(response));
             if (response.getServerStatus() == 1) {
-                System.out.println("SENDER: Server responded with OK");
+                LOGGER.info("SENDER: Server responded with OK");
                 List<TemperatureMeasurement>temperaturesSavedOnServer = response.getSavedTemperatures();
 
                 //TODO: This is hack due to data lost with probeSerial not being available. Must update server code!
                 if (temperaturesSavedOnServer.equals(temperatureMeasurements)) {
-                    System.out.println("SENDER: Removing temperatures from queue");
+                    LOGGER.info("SENDER: Removing temperatures from queue");
                     queue.setRemoveLock(false);
                     queue.removeTemperatures(temperatures);
                 }
             }
         } catch (ServerCommsFailedException e) {
-            System.out.println(e.getMessage());
+            LOGGER.info(e.getMessage());
         }
         queue.setRemoveLock(false);
     }
 
     private ServerTemperatureResponse sendToServer(String jsonData) throws ServerCommsFailedException {
         try {
-            System.out.println("SENDER: Sending to server:");
-            System.out.println(jsonData);
+            LOGGER.info("SENDER: Sending to server:");
+            LOGGER.info(jsonData);
             HttpClient client = HttpClientBuilder.create().build();
             HttpPost httpPost = new HttpPost(serverAddress);
 

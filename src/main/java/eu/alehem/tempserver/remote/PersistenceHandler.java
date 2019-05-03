@@ -2,18 +2,21 @@ package eu.alehem.tempserver.remote;
 
 import java.sql.SQLException;
 import java.util.Set;
+import java.util.logging.Logger;
 
-public class PersistanceHandler implements Runnable {
+public class PersistenceHandler implements Runnable {
 
-    private final int MAX_QUEUE_LEN = 100;
-    private final int DELETE_THRESHOLD = 1000;
+    private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
+    private final int MAX_QUEUE_LEN = 1000;
+    private final int DELETE_THRESHOLD = 10000;
     private final int ADD_THRESHOLD = 30;
-    private final int BATCH_SIZE = 10;
+    private final int BATCH_SIZE = 100;
     private int entriesInDb;
 
     private TempQueue queue = TempQueue.getInstance();
 
-    public PersistanceHandler() throws SQLException {
+    public PersistenceHandler() throws SQLException {
         DatabaseManager.createDataBaseIfNotExists();
         entriesInDb = DatabaseManager.countMeasurementsInDb();
     }
@@ -23,22 +26,22 @@ public class PersistanceHandler implements Runnable {
         int queLen = queue.getQueueLen();
 
         if (queLen < ADD_THRESHOLD && entriesInDb != 0) {
-            System.out.println("PERSISTANCEHANDLER: Populating queue from db");
+            LOGGER.info("PERSISTENCEHANDLER: Populating queue from db");
             try {
                 Set<Temperature> temperatures = DatabaseManager.getTemperatures(BATCH_SIZE);
                 queue.addTemperatures(temperatures);
                 DatabaseManager.deleteTemperatures(temperatures);
                 entriesInDb = DatabaseManager.countMeasurementsInDb();
-                System.out.println("PERSISTANCEHANDLER: Successfully populated from db. DB now has " + entriesInDb + " entries");
+                LOGGER.info("PERSISTENCEHANDLER: Successfully populated from db. DB now has " + entriesInDb + " entries");
                 return;
             } catch (SQLException e) {
-                System.out.println("PERSISTANCEHANDLER: WARNING: failed to get temperatures from db");
+                LOGGER.info("PERSISTENCEHANDLER: WARNING: failed to get temperatures from db");
                 return;
             }
         }
 
         if (queLen > MAX_QUEUE_LEN) {
-            System.out.println("PERSISTANCEHANDLER: Queue longer than max, saving to DB");
+            LOGGER.info("PERSISTENCEHANDLER: Queue longer than max, saving to DB");
             Set<Temperature> temperatures = queue.getN(BATCH_SIZE);
             if (saveToDb(temperatures)) {
                 temperatures.forEach(t -> queue.removeTemperature(t));
@@ -47,7 +50,7 @@ public class PersistanceHandler implements Runnable {
         }
 
         if (queLen > DELETE_THRESHOLD) {
-            System.out.println("PERSISTANCEHANDLER: WARNING: QUEUE is too long, will start to delete entries");
+            LOGGER.info("PERSISTENCEHANDLER: WARNING: QUEUE is too long, will start to delete entries");
             Set<Temperature> temperatures = queue.getN(BATCH_SIZE);
             temperatures.forEach(t -> queue.removeTemperature(t));
         }
@@ -57,7 +60,7 @@ public class PersistanceHandler implements Runnable {
         try {
             DatabaseManager.insertTemperatures(temperatures);
         } catch (Throwable e) {
-            System.out.println("PERSISTANCEHANDLER: Warning: Failed to save temperatures");
+            LOGGER.info("PERSISTENCEHANDLER: Warning: Failed to save temperatures");
             return false;
         }
         return true;
