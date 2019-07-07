@@ -21,7 +21,7 @@ fi
 
 systemctl list-units --full --all | grep 'tempserver-remote.service';
 if [[ $? == 0 ]] ; then
-  echo 'Found service. WIll remove'
+  echo 'Found service. Will remove'
   if systemctl is-active --quiet tempserver-remote.service ; then
     echo "Service is running. will stop"
     systemctl stop tempserver-remote.service
