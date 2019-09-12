@@ -1,8 +1,8 @@
 package eu.alehem.tempserver.remote;
 
 import com.google.gson.annotations.SerializedName;
-
-import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 /**
  * Bean for json representation of temperature data in server posrt.
@@ -21,41 +21,11 @@ import java.util.Objects;
  *  }
  *
  */
+
+@Data
+@AllArgsConstructor
 class TemperatureMeasurement {
     @SerializedName("id") private int measurementId;
     @SerializedName("measurement_time") private String measurementTime;
     @SerializedName("temp") private double temperature;
-
-    TemperatureMeasurement(int measurementId, String measurementTime, double temperature) {
-        this.measurementId = measurementId;
-        this.measurementTime = measurementTime;
-        this.temperature = temperature;
-    }
-
-    public int getMeasurementId() {
-        return measurementId;
-    }
-
-    public String getMeasurementTime() {
-        return measurementTime;
-    }
-
-    public double getTemperature() {
-        return temperature;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        TemperatureMeasurement that = (TemperatureMeasurement) o;
-        return measurementId == that.measurementId &&
-                Double.compare(that.temperature, temperature) == 0 &&
-                measurementTime.equals(that.measurementTime);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(measurementId, measurementTime, temperature);
-    }
 }
