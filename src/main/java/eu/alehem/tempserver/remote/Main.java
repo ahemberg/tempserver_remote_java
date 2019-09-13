@@ -14,17 +14,16 @@ public class Main {
     public static void main(String[] args) throws SQLException, InterruptedException {
         TempQueue queue = TempQueue.getInstance();
 
-        TempReader tempReader = new TempReader();
-        PersistenceHandler persistenceHandler = new PersistenceHandler();
-        TempSender sender = new TempSender();
-        Thread tempReaderThread = new Thread(tempReader, "TempReader");
-        Thread persistenceHandlerThread = new Thread(persistenceHandler, "PersistenceHandler");
-        Thread senderThread = new Thread(sender, "Sender");
-
-        ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-        exec.scheduleAtFixedRate(tempReaderThread, 0, 2, TimeUnit.MINUTES);
-        exec.scheduleAtFixedRate(persistenceHandlerThread, 3, 30, TimeUnit.SECONDS);
-        exec.scheduleAtFixedRate(senderThread, 11, 30, TimeUnit.SECONDS);
+        ScheduledExecutorService exec = Executors.newScheduledThreadPool(3);
+        exec.scheduleAtFixedRate(
+                new Thread(new TempReader(), "TempReader"), 0, 2, TimeUnit.MINUTES
+        );
+        exec.scheduleAtFixedRate(
+                new Thread(new PersistenceHandler(), "PersistenceHandler"), 3, 30, TimeUnit.SECONDS
+        );
+        exec.scheduleAtFixedRate(
+                new Thread(new TempSender(), "Sender"), 11, 30, TimeUnit.SECONDS
+        );
 
         while (true) {
             LOGGER.info("Queue size: " + queue.getQueueLen());
