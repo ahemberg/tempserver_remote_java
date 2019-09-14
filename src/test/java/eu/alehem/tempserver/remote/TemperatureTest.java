@@ -8,13 +8,13 @@ import java.time.Instant;
 @Test
 public class TemperatureTest {
 
-    @Test
-    public void testEquals() {
-        Instant now = Instant.now();
-        Temperature first = new Temperature("1", 1.0, now);
-        Temperature second = new Temperature("1", 1.0, now);
+  @Test
+  public void testEquals() {
+    Instant now = Instant.now();
+    Temperature first = new Temperature("1", 1.0, now);
+    Temperature second = new Temperature("1", 1.0, now);
 
-        Assert.assertEquals(first, second);
-        Assert.assertNotSame(first, second);
-    }
+    Assert.assertEquals(first, second);
+    Assert.assertNotSame(first, second);
+  }
 }
