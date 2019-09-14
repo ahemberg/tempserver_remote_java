@@ -6,58 +6,57 @@ import java.util.Set;
 
 public class TempQueue {
 
-    private Set<Temperature> measurementSet = new HashSet<>();
-    private boolean removeLock = false;
+  private Set<Temperature> measurementSet = new HashSet<>();
+  private boolean removeLock = false;
 
-    private TempQueue() {
-    }
+  private TempQueue() {}
 
-    private static class InstanceHolder {
-        private static final TempQueue instance  = new TempQueue();
-    }
+  private static class InstanceHolder {
+    private static final TempQueue instance = new TempQueue();
+  }
 
-    public static TempQueue getInstance() {
-        return InstanceHolder.instance;
-    }
+  public static TempQueue getInstance() {
+    return InstanceHolder.instance;
+  }
 
-    synchronized public void addTemperature(Temperature temperature) {
-        measurementSet.add(temperature);
-    }
+  public synchronized void addTemperature(Temperature temperature) {
+    measurementSet.add(temperature);
+  }
 
-    synchronized public void addTemperatures(Set<Temperature> temperatures) {
-        measurementSet.addAll(temperatures);
-    }
+  public synchronized void addTemperatures(Set<Temperature> temperatures) {
+    measurementSet.addAll(temperatures);
+  }
 
-    synchronized public void removeTemperature(Temperature temperature) {
-        if (removeLock) return;
-        measurementSet.remove(temperature);
-    }
+  public synchronized void removeTemperature(Temperature temperature) {
+    if (removeLock) return;
+    measurementSet.remove(temperature);
+  }
 
-    synchronized public void removeTemperatures(Set<Temperature> temperatures) {
-        if (removeLock) return;
-        temperatures.forEach(measurementSet::remove);
-    }
+  public synchronized void removeTemperatures(Set<Temperature> temperatures) {
+    if (removeLock) return;
+    temperatures.forEach(measurementSet::remove);
+  }
 
-    synchronized public Set<Temperature> getMeasurementSet() {
-        return measurementSet;
-    }
+  public synchronized Set<Temperature> getMeasurementSet() {
+    return measurementSet;
+  }
 
-    synchronized public int getQueueLen() {
-        return measurementSet.size();
-    }
+  public synchronized int getQueueLen() {
+    return measurementSet.size();
+  }
 
-    synchronized public Temperature getOne() {
-        return measurementSet.stream().findFirst().orElse(null);
-    }
+  public synchronized Temperature getOne() {
+    return measurementSet.stream().findFirst().orElse(null);
+  }
 
-    synchronized public Set<Temperature> getN(int n) {
-        if (n > getQueueLen()) {
-            n = getQueueLen();
-        }
-        return new HashSet<>(new ArrayList<>(measurementSet).subList(0,n));
+  public synchronized Set<Temperature> getN(int n) {
+    if (n > getQueueLen()) {
+      n = getQueueLen();
     }
+    return new HashSet<>(new ArrayList<>(measurementSet).subList(0, n));
+  }
 
-    synchronized public void setRemoveLock(boolean locked) {
-        this.removeLock = locked;
-    }
+  public synchronized void setRemoveLock(boolean locked) {
+    this.removeLock = locked;
+  }
 }
