@@ -6,7 +6,7 @@ import java.util.Set;
 
 public final class DatabaseManager {
 
-  private static final String DATABASE_URL = "jdbc:sqlite:test.db";
+  private static final String DEFAULT_DATABASE_URL = "jdbc:sqlite:tempremote.db";
   private static final String DATABASE_SCHEMA =
       "CREATE TABLE IF NOT EXISTS saved_temperatures"
           + "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -20,30 +20,19 @@ public final class DatabaseManager {
   }
 
   public static void createDataBaseIfNotExists() throws SQLException {
-    Connection c = DriverManager.getConnection(DATABASE_URL);
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
     Statement stmt = c.createStatement();
     stmt.executeUpdate(DATABASE_SCHEMA);
     stmt.close();
     c.close();
   }
 
-  public static void insertTemperature(Temperature temp) throws SQLException {
-    Connection c = DriverManager.getConnection(DATABASE_URL);
-
-    String query =
-        String.format(
-            "INSERT OR IGNORE INTO saved_temperatures(probe, temp, timestamp) VALUES('%s', %f, %d)",
-            temp.getProbeSerial(), temp.getTemperature(), temp.getMeasurementTimeStamp());
-
-    Statement stmt = c.createStatement();
-
-    stmt.executeUpdate(query);
-    stmt.close();
-    c.close();
+  static void insertTemperatures(Set<Temperature> temperatures) throws SQLException {
+    insertTemperatures(temperatures, DEFAULT_DATABASE_URL);
   }
 
-  public static void insertTemperatures(Set<Temperature> temperatures) throws SQLException {
-    Connection c = DriverManager.getConnection(DATABASE_URL);
+  static void insertTemperatures(Set<Temperature> temperatures, String databaseUrl) throws SQLException {
+    Connection c = DriverManager.getConnection(databaseUrl);
 
     Statement stmt = c.createStatement();
     for (Temperature temp : temperatures) {
@@ -59,7 +48,7 @@ public final class DatabaseManager {
   }
 
   public static Set<Temperature> getTemperatures(int limit) throws SQLException {
-    Connection c = DriverManager.getConnection(DATABASE_URL);
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
 
     String query = "SELECT * FROM saved_temperatures LIMIT " + limit;
 
@@ -80,7 +69,7 @@ public final class DatabaseManager {
   }
 
   public static void deleteTemperature(Temperature temperature) throws SQLException {
-    Connection c = DriverManager.getConnection(DATABASE_URL);
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
 
     String query =
         "DELETE FROM saved_temperatures "
@@ -98,7 +87,7 @@ public final class DatabaseManager {
   }
 
   public static void deleteTemperatures(Set<Temperature> temperatures) throws SQLException {
-    Connection c = DriverManager.getConnection(DATABASE_URL);
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
 
     Statement stmt = c.createStatement();
 
@@ -120,7 +109,7 @@ public final class DatabaseManager {
   }
 
   public static int countMeasurementsInDb() throws SQLException {
-    Connection c = DriverManager.getConnection(DATABASE_URL);
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
 
     String query = "SELECT COUNT(*) FROM saved_temperatures";
 
