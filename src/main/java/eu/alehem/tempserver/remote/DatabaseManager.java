@@ -27,11 +27,11 @@ public final class DatabaseManager {
     c.close();
   }
 
-  static void insertTemperatures(Set<Temperature> temperatures) throws SQLException {
+  static void insertTemperatures(final Set<Temperature> temperatures) throws SQLException {
     insertTemperatures(temperatures, DEFAULT_DATABASE_URL);
   }
 
-  static void insertTemperatures(Set<Temperature> temperatures, String databaseUrl) throws SQLException {
+  static void insertTemperatures(final Set<Temperature> temperatures, final String databaseUrl) throws SQLException {
     Connection c = DriverManager.getConnection(databaseUrl);
 
     Statement stmt = c.createStatement();
@@ -47,8 +47,12 @@ public final class DatabaseManager {
     c.close();
   }
 
-  public static Set<Temperature> getTemperatures(int limit) throws SQLException {
-    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
+  static Set<Temperature> getTemperatures(final int limit) throws SQLException {
+    return getTemperatures(limit, DEFAULT_DATABASE_URL);
+  }
+
+  static Set<Temperature> getTemperatures(final int limit, final String database_url) throws SQLException {
+    Connection c = DriverManager.getConnection(database_url);
 
     String query = "SELECT * FROM saved_temperatures LIMIT " + limit;
 
