@@ -5,6 +5,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -24,6 +25,7 @@ import static org.hamcrest.Matchers.is;
 @Test
 public class DatabaseManagerTest {
 
+    private final String DATABASE_PATH = "src/test/resources/test.db";
     private final String url = "jdbc:sqlite:src/test/resources/test.db";
 
     private final String DATABASE_SCHEMA =
@@ -46,6 +48,7 @@ public class DatabaseManagerTest {
     @AfterClass
     public void afterClass() {
         //Delete Database
+        new File(DATABASE_PATH).delete();
     }
 
     @AfterMethod

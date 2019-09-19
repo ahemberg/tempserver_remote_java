@@ -3,8 +3,20 @@ package eu.alehem.tempserver.remote;
 import java.sql.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public final class DatabaseManager {
+
+  static <T> Consumer<T> throwingConsumerWrapper(
+          ThrowingConsumer<T, Exception> throwingConsumer) {
+    return i -> {
+      try {
+        throwingConsumer.accept(i);
+      } catch (Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    };
+  }
 
   private static final String DEFAULT_DATABASE_URL = "jdbc:sqlite:tempremote.db";
   private static final String DATABASE_SCHEMA =
@@ -35,6 +47,18 @@ public final class DatabaseManager {
     Connection c = DriverManager.getConnection(databaseUrl);
 
     Statement stmt = c.createStatement();
+
+    temperatures.forEach(
+            throwingConsumerWrapper(
+                    t ->
+                    stmt.addBatch(
+                            String.format(
+                    "INSERT OR IGNORE INTO saved_temperatures(probe, temp, timestamp) VALUES('%s', %f, %d);",
+                    t.getProbeSerial(), t.getTemperature(), t.getMeasurementTimeStamp())
+                    ),
+                    SQLException.class)
+    );
+
     for (Temperature temp : temperatures) {
       stmt.addBatch(
           String.format(
