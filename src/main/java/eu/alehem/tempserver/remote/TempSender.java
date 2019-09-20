@@ -1,6 +1,7 @@
 package eu.alehem.tempserver.remote;
 
 import com.google.gson.Gson;
+import eu.alehem.tempserver.remote.exceptions.ServerCommsFailedException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -87,7 +88,8 @@ public class TempSender implements Runnable {
       httpPost.setEntity(entity);
       HttpResponse response = client.execute(httpPost);
 
-      Reader reader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8);
+      Reader reader =
+          new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8);
       ServerTemperatureResponse result =
           new Gson().fromJson(reader, ServerTemperatureResponse.class);
       if (result == null) {
@@ -96,14 +98,7 @@ public class TempSender implements Runnable {
       return result;
     } catch (Throwable t) {
       LOGGER.warning("Failed to save temperature to server.");
-      // t.printStackTrace();
       throw new ServerCommsFailedException();
     }
-  }
-}
-
-class ServerCommsFailedException extends Exception {
-  ServerCommsFailedException() {
-    super("ERROR: Server communication failed");
   }
 }
