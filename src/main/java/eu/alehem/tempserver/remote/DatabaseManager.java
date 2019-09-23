@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public final class DatabaseManager {
+final class DatabaseManager {
 
   private static final String DEFAULT_DATABASE_URL = "jdbc:sqlite:tempremote.db";
   private static final String DATABASE_SCHEMA =

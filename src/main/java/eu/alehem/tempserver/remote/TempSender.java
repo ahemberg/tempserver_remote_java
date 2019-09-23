@@ -2,6 +2,7 @@ package eu.alehem.tempserver.remote;
 
 import com.google.gson.Gson;
 import eu.alehem.tempserver.remote.exceptions.ServerCommsFailedException;
+import lombok.extern.java.Log;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -15,12 +16,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+@Log
 public class TempSender implements Runnable {
 
-  private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
   private final int BATCH_SIZE = 100;
   private final String mySerial = "000000001938eb39"; // TODO FIX THIS
   private final int myID = 6; // TODO FIX THIS;
@@ -51,26 +51,24 @@ public class TempSender implements Runnable {
 
     try {
       ServerTemperatureResponse response = sendToServer(new Gson().toJson(postData));
-      // LOGGER.info("SENDER: Got from server:");
-      // LOGGER.info(new Gson().toJson(response));
       if (response.getServerStatus() == 1) {
-        LOGGER.info("SENDER: Server responded with OK");
+        log.info("SENDER: Server responded with OK");
         List<TemperatureMeasurement> temperaturesSavedOnServer = response.getSavedTemperatures();
 
         // TODO: This is hack due to data lost with probeSerial not being available. Must update
         // server code!
         if (temperaturesSavedOnServer.equals(temperatureMeasurements)) {
-          LOGGER.info("SENDER: Removing temperatures from queue");
+          log.info("SENDER: Removing temperatures from queue");
           queue.setRemoveLock(false);
           queue.removeTemperatures(temperatures);
         }
       } else {
-        LOGGER.warning("Server rejected transaction");
-        LOGGER.warning("Server status: " + response.getServerStatus());
-        LOGGER.warning("Server message: " + response.getServerMessage());
+        log.warning("Server rejected transaction");
+        log.warning("Server status: " + response.getServerStatus());
+        log.warning("Server message: " + response.getServerMessage());
       }
     } catch (ServerCommsFailedException e) {
-      LOGGER.info(e.getMessage());
+      log.info(e.getMessage());
     }
     queue.setRemoveLock(false);
   }
@@ -78,8 +76,7 @@ public class TempSender implements Runnable {
   private ServerTemperatureResponse sendToServer(String jsonData)
       throws ServerCommsFailedException {
     try {
-      LOGGER.info("SENDER: Sending to server");
-      // LOGGER.info(jsonData);
+      log.info("SENDER: Sending to server");
       HttpClient client = HttpClientBuilder.create().build();
       HttpPost httpPost = new HttpPost(serverAddress);
 
@@ -97,7 +94,7 @@ public class TempSender implements Runnable {
       }
       return result;
     } catch (Throwable t) {
-      LOGGER.warning("Failed to save temperature to server.");
+      log.warning("Failed to save temperature to server.");
       throw new ServerCommsFailedException();
     }
   }

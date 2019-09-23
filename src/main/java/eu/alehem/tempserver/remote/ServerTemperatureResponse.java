@@ -16,7 +16,7 @@ import java.util.List;
  * <p>saved data is a list containing all the measurements that were saved.
  */
 @Data
-public class ServerTemperatureResponse {
+class ServerTemperatureResponse {
   @SerializedName("status")
   private int serverStatus;
 
