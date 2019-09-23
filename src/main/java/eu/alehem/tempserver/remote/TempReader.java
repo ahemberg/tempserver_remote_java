@@ -4,22 +4,21 @@ import com.pi4j.component.temperature.TemperatureSensor;
 import com.pi4j.component.temperature.impl.TmpDS18B20DeviceType;
 import com.pi4j.io.w1.W1Device;
 import com.pi4j.io.w1.W1Master;
+import lombok.extern.java.Log;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+@Log
 public class TempReader implements Runnable {
-
-  private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
   private TempQueue queue = TempQueue.getInstance();
   private List<W1Device> probes = getTempProbes();
 
   @Override
   public void run() {
-    LOGGER.info("Reading temperatures");
+    log.info("Reading temperatures");
     probes.stream()
         .map(this::getTemperature)
         .collect(Collectors.toList())

@@ -11,23 +11,23 @@ import java.time.temporal.ChronoUnit;
 
 @Data
 @AllArgsConstructor
-public class Temperature {
+class Temperature {
 
   private String probeSerial;
   private double temperature;
   private Instant measurementTime;
 
-  public Temperature(String probeSerial, double temperature, long measurementTime) {
+  Temperature(String probeSerial, double temperature, long measurementTime) {
     this.probeSerial = probeSerial;
     this.temperature = temperature;
     this.measurementTime = Instant.ofEpochSecond(measurementTime);
   }
 
-  public long getMeasurementTimeStamp() {
+  long getMeasurementTimeStamp() {
     return measurementTime.getEpochSecond();
   }
 
-  public String getMeasurementTimeServerFormat() {
+  String getMeasurementTimeServerFormat() {
     LocalDateTime ldt =
         LocalDateTime.ofInstant(measurementTime.truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC);
     Timestamp current = Timestamp.valueOf(ldt);

@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-public class TemperaturePost {
+class TemperaturePost {
 
   @SerializedName("remote_id")
   private int remoteId;
