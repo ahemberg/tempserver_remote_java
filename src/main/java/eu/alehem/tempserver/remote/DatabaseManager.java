@@ -1,8 +1,14 @@
 package eu.alehem.tempserver.remote;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 final class DatabaseManager {
@@ -11,6 +17,7 @@ final class DatabaseManager {
   private static final String DATABASE_SCHEMA =
       "CREATE TABLE IF NOT EXISTS saved_temperatures"
           + "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+          + " temp_id TEXT NOT NULL,"
           + " probe TEXT NOT NULL,"
           + " temp DOUBLE NOT NULL,"
           + " timestamp INTEGER NOT NULL,"
@@ -58,8 +65,11 @@ final class DatabaseManager {
             t ->
                 stmt.addBatch(
                     String.format(
-                        "INSERT OR IGNORE INTO saved_temperatures(probe, temp, timestamp) VALUES('%s', %f, %d);",
-                        t.getProbeSerial(), t.getTemperature(), t.getMeasurementTimeStamp()))));
+                        "INSERT OR IGNORE INTO saved_temperatures(temp_id, probe, temp, timestamp) VALUES('%s','%s', %f, %d);",
+                        t.getId().toString(),
+                        t.getProbeSerial(),
+                        t.getTemperature(),
+                        t.getMeasurementTimeStamp()))));
 
     stmt.executeBatch();
     stmt.close();
@@ -83,7 +93,11 @@ final class DatabaseManager {
     Set<Temperature> temperatures = new HashSet<>();
     while (res.next()) {
       temperatures.add(
-          new Temperature(res.getString("probe"), res.getDouble("temp"), res.getInt("timestamp")));
+          new Temperature(
+              UUID.fromString(res.getString("temp_id")),
+              res.getString("probe"),
+              res.getDouble("temp"),
+              Instant.ofEpochSecond(res.getInt("timestamp"))));
     }
     res.close();
     stmt.close();
@@ -91,6 +105,7 @@ final class DatabaseManager {
     return temperatures;
   }
 
+  //TODO: Deletemethods could (should?) take the UUID of the temp into account.
   static void deleteTemperature(Temperature temperature) throws SQLException {
     deleteTemperature(temperature, DEFAULT_DATABASE_URL);
   }

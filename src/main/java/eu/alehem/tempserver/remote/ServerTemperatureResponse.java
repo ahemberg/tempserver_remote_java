@@ -1,6 +1,8 @@
 package eu.alehem.tempserver.remote;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
@@ -16,20 +18,17 @@ import java.util.List;
  * <p>saved data is a list containing all the measurements that were saved.
  */
 @Data
+@AllArgsConstructor
 class ServerTemperatureResponse {
-  @SerializedName("status")
-  private int serverStatus;
+  @SerializedName("save_successful")
+  private boolean saveSuccessful;
 
-  @SerializedName("msg")
-  private String serverMessage;
+  @SerializedName("saved_measurements")
+  private List<UUID> savedMeasurements;
 
-  @SerializedName("saved_data")
-  List<TemperatureMeasurement> savedTemperatures;
+  @SerializedName("response_code")
+  private int responseCode;
 
-  ServerTemperatureResponse(
-      int serverStatus, String serverMessage, List<TemperatureMeasurement> savedTemperatures) {
-    this.serverStatus = serverStatus;
-    this.serverMessage = serverMessage;
-    this.savedTemperatures = savedTemperatures;
-  }
+  @SerializedName("message")
+  private String message;
 }

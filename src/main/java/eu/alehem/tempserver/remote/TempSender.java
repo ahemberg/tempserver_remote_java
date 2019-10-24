@@ -2,6 +2,13 @@ package eu.alehem.tempserver.remote;
 
 import com.google.gson.Gson;
 import eu.alehem.tempserver.remote.exceptions.ServerCommsFailedException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -10,23 +17,16 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Log
 public class TempSender implements Runnable {
 
   private final int BATCH_SIZE = 100;
   private final String mySerial = "000000001938eb39"; // TODO FIX THIS
-  private final int myID = 6; // TODO FIX THIS;
-  private final String serverAddress = "https://alehem.eu/api/save_temp"; // TODO FIX THIS
+  private final UUID myID =
+      UUID.fromString("f284b942-22d0-4b2d-a5b9-e0fc54da9ff2"); // TODO FIX THIS;
+  private final String serverAddress =
+      "https://tempserver-master.appspot.com/temperature/save/"; // TODO FIX THIS
   private TempQueue queue = TempQueue.getInstance();
-  private Random idGenerator = new Random();
 
   @Override
   public void run() {
@@ -42,30 +42,36 @@ public class TempSender implements Runnable {
             .map(
                 t ->
                     new TemperatureMeasurement(
-                        idGenerator.nextInt(10000),
-                        t.getMeasurementTimeServerFormat(),
-                        t.getTemperature()))
+                        t.getId(), t.getMeasurementTime(), t.getTemperature()))
             .collect(Collectors.toList());
 
     TemperaturePost postData = new TemperaturePost(myID, mySerial, temperatureMeasurements);
 
     try {
       ServerTemperatureResponse response = sendToServer(new Gson().toJson(postData));
-      if (response.getServerStatus() == 1) {
+      log.info(response.toString());
+      if (response.isSaveSuccessful()) {
         log.info("SENDER: Server responded with OK");
-        List<TemperatureMeasurement> temperaturesSavedOnServer = response.getSavedTemperatures();
+        Set<Temperature> temperaturesSavedOnServer =
+            temperatureMeasurements.stream()
+                .filter(m -> response.getSavedMeasurements().contains(m.getMeasurementId()))
+                .map(
+                    tm ->
+                        temperatures.stream()
+                            .filter(t -> t.getId() == tm.getMeasurementId())
+                            .collect(Collectors.toList())
+                            .get(0))
+                .collect(Collectors.toSet());
 
-        // TODO: This is hack due to data lost with probeSerial not being available. Must update
-        // server code!
-        if (temperaturesSavedOnServer.equals(temperatureMeasurements)) {
-          log.info("SENDER: Removing temperatures from queue");
-          queue.setRemoveLock(false);
-          queue.removeTemperatures(temperatures);
-        }
+        log.info(temperatures.toString());
+        log.info(temperaturesSavedOnServer.toString());
+        log.info("SENDER: Removing temperatures from queue");
+        queue.setRemoveLock(false);
+        queue.removeTemperatures(temperaturesSavedOnServer);
       } else {
         log.warning("Server rejected transaction");
-        log.warning("Server status: " + response.getServerStatus());
-        log.warning("Server message: " + response.getServerMessage());
+        log.warning("Server status: " + response.getResponseCode());
+        log.warning("Server message: " + response.getMessage());
       }
     } catch (ServerCommsFailedException e) {
       log.info(e.getMessage());
@@ -80,10 +86,14 @@ public class TempSender implements Runnable {
       HttpClient client = HttpClientBuilder.create().build();
       HttpPost httpPost = new HttpPost(serverAddress);
 
-      StringEntity entity =
-          new StringEntity("data=" + jsonData, ContentType.APPLICATION_FORM_URLENCODED);
+      StringEntity entity = new StringEntity(jsonData, ContentType.APPLICATION_JSON);
       httpPost.setEntity(entity);
       HttpResponse response = client.execute(httpPost);
+
+      if (response.getStatusLine().getStatusCode() != 200) {
+        log.warning("Got status code: " + response.getStatusLine().getStatusCode());
+        throw new ServerCommsFailedException();
+      }
 
       Reader reader =
           new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8);

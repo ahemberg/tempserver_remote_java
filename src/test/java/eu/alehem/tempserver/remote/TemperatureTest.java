@@ -10,7 +10,7 @@ public class TemperatureTest {
 
   @Test
   public void testEquals() {
-    Instant now = Instant.now();
+    final long now = Instant.now().getEpochSecond();
     Temperature first = new Temperature("1", 1.0, now);
     Temperature second = new Temperature("1", 1.0, now);
 

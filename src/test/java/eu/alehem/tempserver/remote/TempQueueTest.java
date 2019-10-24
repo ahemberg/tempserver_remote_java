@@ -1,13 +1,12 @@
 package eu.alehem.tempserver.remote;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 @Test
 public class TempQueueTest {
@@ -17,7 +16,7 @@ public class TempQueueTest {
 
     TempQueue queue = TempQueue.getInstance();
 
-    Instant now = Instant.now();
+    final long now = Instant.now().getEpochSecond();
     Temperature first = new Temperature("1", 1.0, now);
     Temperature second = new Temperature("1", 1.0, now);
 
@@ -33,7 +32,8 @@ public class TempQueueTest {
   public void testAddSimilarToQueue() {
     TempQueue queue = TempQueue.getInstance();
 
-    Instant now = Instant.now();
+    final long now = Instant.now().getEpochSecond();
+
     Temperature first = new Temperature("1", 1.0, now);
     Temperature second = new Temperature("2", 1.0, now);
 
@@ -50,7 +50,8 @@ public class TempQueueTest {
   public void testAddRemoveElementFromQueue() {
     TempQueue queue = TempQueue.getInstance();
 
-    Instant now = Instant.now();
+    final long now = Instant.now().getEpochSecond();
+
     Temperature first = new Temperature("1", 1.0, now);
 
     queue.addTemperature(first);
@@ -67,17 +68,19 @@ public class TempQueueTest {
   public void testRemoveElementsFromQueue() {
     TempQueue queue = TempQueue.getInstance();
 
+    final long now = Instant.now().getEpochSecond();
+
     List<Temperature> temps = new ArrayList<>();
-    temps.add(new Temperature("1", 2.0, Instant.now()));
-    temps.add(new Temperature("2", 2.0, Instant.now()));
-    temps.add(new Temperature("3", 2.0, Instant.now()));
-    temps.add(new Temperature("4", 2.0, Instant.now()));
-    temps.add(new Temperature("5", 2.0, Instant.now()));
-    temps.add(new Temperature("6", 2.0, Instant.now()));
-    temps.add(new Temperature("7", 2.0, Instant.now()));
-    temps.add(new Temperature("8", 2.0, Instant.now()));
-    temps.add(new Temperature("9", 2.0, Instant.now()));
-    temps.add(new Temperature("10", 2.0, Instant.now()));
+    temps.add(new Temperature("1", 2.0, now));
+    temps.add(new Temperature("2", 2.0, now));
+    temps.add(new Temperature("3", 2.0, now));
+    temps.add(new Temperature("4", 2.0, now));
+    temps.add(new Temperature("5", 2.0, now));
+    temps.add(new Temperature("6", 2.0, now));
+    temps.add(new Temperature("7", 2.0, now));
+    temps.add(new Temperature("8", 2.0, now));
+    temps.add(new Temperature("9", 2.0, now));
+    temps.add(new Temperature("10", 2.0, now));
 
     Set<Temperature> addToS = new HashSet<>(temps);
     Set<Temperature> removeFromS = new HashSet<>(temps.subList(0, 5));
@@ -94,17 +97,19 @@ public class TempQueueTest {
   public void testGetN() {
     TempQueue queue = TempQueue.getInstance();
 
+    final long now = Instant.now().getEpochSecond();
+
     Set<Temperature> temps = new HashSet<>();
-    temps.add(new Temperature("1", 2.0, Instant.now()));
-    temps.add(new Temperature("2", 2.0, Instant.now()));
-    temps.add(new Temperature("3", 2.0, Instant.now()));
-    temps.add(new Temperature("4", 2.0, Instant.now()));
-    temps.add(new Temperature("5", 2.0, Instant.now()));
-    temps.add(new Temperature("6", 2.0, Instant.now()));
-    temps.add(new Temperature("7", 2.0, Instant.now()));
-    temps.add(new Temperature("8", 2.0, Instant.now()));
-    temps.add(new Temperature("9", 2.0, Instant.now()));
-    temps.add(new Temperature("10", 2.0, Instant.now()));
+    temps.add(new Temperature("1", 2.0, now));
+    temps.add(new Temperature("2", 2.0, now));
+    temps.add(new Temperature("3", 2.0, now));
+    temps.add(new Temperature("4", 2.0, now));
+    temps.add(new Temperature("5", 2.0, now));
+    temps.add(new Temperature("6", 2.0, now));
+    temps.add(new Temperature("7", 2.0, now));
+    temps.add(new Temperature("8", 2.0, now));
+    temps.add(new Temperature("9", 2.0, now));
+    temps.add(new Temperature("10", 2.0, now));
 
     queue.addTemperatures(temps);
 
