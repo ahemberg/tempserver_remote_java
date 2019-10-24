@@ -1,5 +1,6 @@
 package eu.alehem.tempserver.remote;
 
+import eu.alehem.tempserver.remote.properties.ApplicationProperties;
 import java.sql.SQLException;
 import java.util.Set;
 import lombok.extern.java.Log;
@@ -7,10 +8,10 @@ import lombok.extern.java.Log;
 @Log
 public class PersistenceHandler implements Runnable {
 
-  private final int MAX_QUEUE_LEN = 60;
-  private final int DELETE_THRESHOLD = 10000;
-  private final int ADD_THRESHOLD = 10;
-  private final int BATCH_SIZE = 10;
+  private final int MAX_QUEUE_LEN;
+  private final int DELETE_THRESHOLD;
+  private final int ADD_THRESHOLD;
+  private final int BATCH_SIZE;
   private int entriesInDb;
 
   private TempQueue queue = TempQueue.getInstance();
@@ -18,6 +19,12 @@ public class PersistenceHandler implements Runnable {
   PersistenceHandler() throws SQLException {
     DatabaseManager.createDataBaseIfNotExists();
     entriesInDb = DatabaseManager.countMeasurementsInDb();
+    ApplicationProperties properties = ApplicationProperties.getInstance();
+    MAX_QUEUE_LEN = Integer.valueOf(properties.getProperty("persistencehandler.max_queue_len"));
+    DELETE_THRESHOLD =
+        Integer.valueOf(properties.getProperty("persistencehandler.delete_threshold"));
+    ADD_THRESHOLD = Integer.valueOf(properties.getProperty("persistencehandler.add_threshold"));
+    BATCH_SIZE = Integer.valueOf(properties.getProperty("persistencehandler.batch_size"));
   }
 
   private void populateQueueFromDb() throws SQLException {
