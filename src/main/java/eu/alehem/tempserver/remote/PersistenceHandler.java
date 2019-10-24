@@ -38,6 +38,7 @@ public class PersistenceHandler implements Runnable {
                 + " entries");
         return;
       } catch (SQLException e) {
+        log.info(e.getMessage());
         log.warning("PERSISTENCEHANDLER: WARNING: failed to get temperatures from db");
         return;
       }
