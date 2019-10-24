@@ -2,6 +2,7 @@ package eu.alehem.tempserver.remote;
 
 import com.google.gson.Gson;
 import eu.alehem.tempserver.remote.exceptions.ServerCommsFailedException;
+import eu.alehem.tempserver.remote.properties.ApplicationProperties;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -21,12 +22,19 @@ import org.apache.http.impl.client.HttpClientBuilder;
 @Log
 public class TempSender implements Runnable {
 
-  private final int BATCH_SIZE = 100;
-  private final String mySerial = "000000001938eb39"; // TODO FIX THIS
-  private final UUID myID = UUID.fromString("f284b942-22d0-4b2d-a5b9-e0fc54da9ff2");
-  private final String serverAddress =
-      "https://tempserver-master.appspot.com/temperature/save/"; // TODO FIX THIS
+  private final int BATCH_SIZE;
+  private final String mySerial;
+  private final UUID myID;
+  private final String serverAddress;
   private TempQueue queue = TempQueue.getInstance();
+
+  TempSender(String mySerial) {
+    ApplicationProperties properties = ApplicationProperties.getInstance();
+    this.mySerial = mySerial;
+    this.BATCH_SIZE = Integer.valueOf(properties.getProperty("sender.batch_size"));
+    this.myID = UUID.fromString(properties.getProperty("sender.pi_uuid"));
+    this.serverAddress = properties.getProperty("sender.server_address");
+  }
 
   @Override
   public void run() {
@@ -49,7 +57,6 @@ public class TempSender implements Runnable {
 
     try {
       ServerTemperatureResponse response = sendToServer(new Gson().toJson(postData));
-      log.info(response.toString());
       if (response.isSaveSuccessful()) {
         log.info("Server response: " + response.getMessage());
         Set<Temperature> temperaturesSavedOnServer =
