@@ -23,7 +23,8 @@ public class JsonTest {
 
   @Test
   public void testSerializationOfTemperatureMeasurement() {
-    final String json = "{\"id\":1,\"measurement_time\":\"1556787821\",\"temp\":7.4}";
+    final String json =
+        "{\"id\":\"728c0433-faa4-498a-b9c5-0465dcfea88a\",\"measurement_time\":{\"seconds\":0,\"nanos\":0},\"temp\":7.4}";
     TemperatureMeasurement meas =
         new TemperatureMeasurement(UUID.fromString(UUIDStrings[0]), Instant.ofEpochSecond(0), 7.4);
     Gson g = new Gson();
@@ -33,7 +34,8 @@ public class JsonTest {
 
   @Test
   public void testDeserializationOfTemperatureMeasurement() {
-    final String json = "{\"id\":1,\"measurement_time\":\"1556787821\",\"temp\":7.4}";
+    final String json =
+        "{\"id\":\"728c0433-faa4-498a-b9c5-0465dcfea88a\",\"measurement_time\":{\"seconds\":0,\"nanos\":0},\"temp\":7.4}";
     TemperatureMeasurement meas =
         new TemperatureMeasurement(UUID.fromString(UUIDStrings[0]), Instant.ofEpochSecond(0), 7.4);
     Gson g = new Gson();
@@ -44,7 +46,11 @@ public class JsonTest {
   @Test
   public void testSerializationOfTemperaturePost() {
     final String json =
-        "{\"remote_id\":1,\"remote_serial\":\"1234567\",\"temperatures\":[{\"id\":1,\"measurement_time\":\"1556788476\",\"temp\":7.4},{\"id\":2,\"measurement_time\":\"1556787821\",\"temp\":7.4}]}";
+        "{\"id\":\"a6c23cb5-1b70-4bd8-914f-df854c08e94d\",\"remote_serial\":\"1234567\","
+            + "\"temperatures\":[{\"id\":\"728c0433-faa4-498a-b9c5-0465dcfea88a\","
+            + "\"measurement_time\":{\"seconds\":0,\"nanos\":0},\"temp\":7.4},"
+            + "{\"id\":\"2d7e7e46-18b8-4476-9ef3-6847ca6aee25\",\"measurement_time\":"
+            + "{\"seconds\":60,\"nanos\":0},\"temp\":7.4}]}";
     List<TemperatureMeasurement> temperatureMeasurements = new ArrayList<>();
     temperatureMeasurements.add(
         new TemperatureMeasurement(UUID.fromString(UUIDStrings[0]), Instant.ofEpochSecond(0), 7.4));
@@ -63,7 +69,11 @@ public class JsonTest {
   @Test
   public void testDeserializationOfTemperaturePost() {
     final String json =
-        "{\"remote_id\":1,\"remote_serial\":\"1234567\",\"temperatures\":[{\"id\":1,\"measurement_time\":\"1556788476\",\"temp\":7.4},{\"id\":2,\"measurement_time\":\"1556787821\",\"temp\":7.4}]}";
+        "{\"id\":\"a6c23cb5-1b70-4bd8-914f-df854c08e94d\",\"remote_serial\":\"1234567\","
+            + "\"temperatures\":[{\"id\":\"728c0433-faa4-498a-b9c5-0465dcfea88a\","
+            + "\"measurement_time\":{\"seconds\":0,\"nanos\":0},\"temp\":7.4},"
+            + "{\"id\":\"2d7e7e46-18b8-4476-9ef3-6847ca6aee25\",\"measurement_time\":"
+            + "{\"seconds\":60,\"nanos\":0},\"temp\":7.4}]}";
     List<TemperatureMeasurement> temperatureMeasurements = new ArrayList<>();
     temperatureMeasurements.add(
         new TemperatureMeasurement(UUID.fromString(UUIDStrings[0]), Instant.ofEpochSecond(0), 7.4));

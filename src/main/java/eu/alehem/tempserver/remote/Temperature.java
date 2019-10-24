@@ -16,13 +16,6 @@ class Temperature {
   private final double temperature;
   private final Instant measurementTime;
 
-  Temperature(final String probeSerial, final double temperature, final long measurementTime) {
-    this.id = UUID.randomUUID();
-    this.probeSerial = probeSerial;
-    this.temperature = temperature;
-    this.measurementTime = Instant.ofEpochSecond(measurementTime);
-  }
-
   long getMeasurementTimeStamp() {
     return measurementTime.getEpochSecond();
   }

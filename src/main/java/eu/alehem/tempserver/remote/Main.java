@@ -14,15 +14,15 @@ public class Main {
     TempQueue queue = TempQueue.getInstance();
 
     ScheduledExecutorService exec = Executors.newScheduledThreadPool(3);
-    exec.scheduleAtFixedRate(new Thread(new TempReader(), "TempReader"), 0, 5, TimeUnit.SECONDS);
+    exec.scheduleAtFixedRate(new Thread(new TempReader(), "TempReader"), 0, 2, TimeUnit.MINUTES);
     exec.scheduleAtFixedRate(
-        new Thread(new PersistenceHandler(), "PersistenceHandler"), 3, 5, TimeUnit.SECONDS);
-    exec.scheduleAtFixedRate(new Thread(new TempSender(), "Sender"), 11, 10, TimeUnit.SECONDS);
+        new Thread(new PersistenceHandler(), "PersistenceHandler"), 3, 30, TimeUnit.SECONDS);
+    exec.scheduleAtFixedRate(new Thread(new TempSender(), "Sender"), 11, 30, TimeUnit.SECONDS);
 
     while (true) {
       log.info("Queue size: " + queue.getQueueLen());
       log.info("Entries in db: " + DatabaseManager.countMeasurementsInDb());
-      Thread.sleep(4000);
+      Thread.sleep(10000);
     }
   }
 }
