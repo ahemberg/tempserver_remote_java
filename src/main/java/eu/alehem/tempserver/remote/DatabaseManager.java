@@ -65,7 +65,7 @@ final class DatabaseManager {
             t ->
                 stmt.addBatch(
                     String.format(
-                        "INSERT OR IGNORE INTO saved_temperatures(temp_id, probe, temp, timestamp) VALUES('%s','%s', %f, %d);",
+                        "INSERT OR IGNORE INTO saved_temperatures(temp_id, probe, temp, timestamp) VALUES(\"%s\",\"%s\", %f, %d);",
                         t.getId().toString(),
                         t.getProbeSerial(),
                         t.getTemperature(),
@@ -105,7 +105,7 @@ final class DatabaseManager {
     return temperatures;
   }
 
-  //TODO: Deletemethods could (should?) take the UUID of the temp into account.
+  // TODO: It should be safe to only consider temp_id.
   static void deleteTemperature(Temperature temperature) throws SQLException {
     deleteTemperature(temperature, DEFAULT_DATABASE_URL);
   }
@@ -115,7 +115,8 @@ final class DatabaseManager {
 
     String query =
         String.format(
-            "DELETE FROM saved_temperatures WHERE probe=%s AND temp=%f AND timestamp=%d",
+            "DELETE FROM saved_temperatures WHERE temp_id=\"%s\" AND probe=\"%s\" AND temp=%f AND timestamp=%d",
+            temperature.getId(),
             temperature.getProbeSerial(),
             temperature.getTemperature(),
             temperature.getMeasurementTimeStamp());
@@ -141,8 +142,11 @@ final class DatabaseManager {
             t ->
                 stmt.addBatch(
                     String.format(
-                        "DELETE FROM saved_temperatures WHERE probe=%s AND temp=%f AND timestamp=%d",
-                        t.getProbeSerial(), t.getTemperature(), t.getMeasurementTimeStamp()))));
+                        "DELETE FROM saved_temperatures WHERE temp_id=\"%s\" AND probe=\"%s\" AND temp=%f AND timestamp=%d",
+                        t.getId(),
+                        t.getProbeSerial(),
+                        t.getTemperature(),
+                        t.getMeasurementTimeStamp()))));
 
     stmt.executeBatch();
     stmt.close();

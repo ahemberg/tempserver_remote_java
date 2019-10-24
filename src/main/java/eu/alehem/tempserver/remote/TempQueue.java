@@ -42,9 +42,8 @@ class TempQueue {
   }
 
   synchronized Set<Temperature> getN(int n) {
-    if (n > getQueueLen()) {
-      n = getQueueLen();
-    }
+    final int queueLength = getQueueLen();
+    n = n > queueLength ? queueLength : n;
     return new HashSet<>(new ArrayList<>(measurementSet).subList(0, n));
   }
 

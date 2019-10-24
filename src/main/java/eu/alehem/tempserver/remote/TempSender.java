@@ -2,6 +2,7 @@ package eu.alehem.tempserver.remote;
 
 import com.google.gson.Gson;
 import eu.alehem.tempserver.remote.exceptions.ServerCommsFailedException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -22,8 +23,7 @@ public class TempSender implements Runnable {
 
   private final int BATCH_SIZE = 100;
   private final String mySerial = "000000001938eb39"; // TODO FIX THIS
-  private final UUID myID =
-      UUID.fromString("f284b942-22d0-4b2d-a5b9-e0fc54da9ff2"); // TODO FIX THIS;
+  private final UUID myID = UUID.fromString("f284b942-22d0-4b2d-a5b9-e0fc54da9ff2");
   private final String serverAddress =
       "https://tempserver-master.appspot.com/temperature/save/"; // TODO FIX THIS
   private TempQueue queue = TempQueue.getInstance();
@@ -51,7 +51,7 @@ public class TempSender implements Runnable {
       ServerTemperatureResponse response = sendToServer(new Gson().toJson(postData));
       log.info(response.toString());
       if (response.isSaveSuccessful()) {
-        log.info("SENDER: Server responded with OK");
+        log.info("Server response: " + response.getMessage());
         Set<Temperature> temperaturesSavedOnServer =
             temperatureMeasurements.stream()
                 .filter(m -> response.getSavedMeasurements().contains(m.getMeasurementId()))
@@ -63,9 +63,7 @@ public class TempSender implements Runnable {
                             .get(0))
                 .collect(Collectors.toSet());
 
-        log.info(temperatures.toString());
-        log.info(temperaturesSavedOnServer.toString());
-        log.info("SENDER: Removing temperatures from queue");
+        log.info("Removing temperatures from queue");
         queue.setRemoveLock(false);
         queue.removeTemperatures(temperaturesSavedOnServer);
       } else {
@@ -82,7 +80,7 @@ public class TempSender implements Runnable {
   private ServerTemperatureResponse sendToServer(String jsonData)
       throws ServerCommsFailedException {
     try {
-      log.info("SENDER: Sending to server");
+      log.info("Sending to server");
       HttpClient client = HttpClientBuilder.create().build();
       HttpPost httpPost = new HttpPost(serverAddress);
 
@@ -103,8 +101,9 @@ public class TempSender implements Runnable {
         throw new ServerCommsFailedException();
       }
       return result;
-    } catch (Throwable t) {
+    } catch (ServerCommsFailedException | IOException e) {
       log.warning("Failed to save temperature to server.");
+      log.warning(e.getMessage());
       throw new ServerCommsFailedException();
     }
   }
