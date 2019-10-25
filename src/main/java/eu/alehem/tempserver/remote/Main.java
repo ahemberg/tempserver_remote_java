@@ -12,21 +12,29 @@ import lombok.extern.java.Log;
 @Log
 public class Main {
 
-  public static void main(String[] args) throws SQLException, InterruptedException, IOException {
+  private static int tempReaderFrequency;
+  private static int persistenceHandlerFrequency;
+  private static int senderFrequency;
+  private static int monitorFrequency;
+  private static int corePoolSize;
+  private static String piSerial;
+
+  private static void setUp() throws IOException, InterruptedException {
     ApplicationProperties properties = ApplicationProperties.getInstance();
 
-    final int tempReaderFrequency =
-        Integer.valueOf(properties.getProperty("tempreader.frequency.seconds"));
-    final int persistenceHandlerFrequency =
+    tempReaderFrequency = Integer.valueOf(properties.getProperty("tempreader.frequency.seconds"));
+    persistenceHandlerFrequency =
         Integer.valueOf(properties.getProperty("persistencehandler.frequency.seconds"));
-    final int senderFrequency = Integer.valueOf(properties.getProperty("sender.frequency.seconds"));
-    final int corePoolSize = Integer.valueOf(properties.getProperty("main.core_pool_size"));
+    senderFrequency = Integer.valueOf(properties.getProperty("sender.frequency.seconds"));
+    corePoolSize = Integer.valueOf(properties.getProperty("main.core_pool_size"));
+    monitorFrequency = Integer.valueOf(properties.getProperty("main.monitor_frequency"));
+    piSerial = SystemInfo.getSerial();
+  }
 
-    final String piSerial = SystemInfo.getSerial();
-
-    TempQueue queue = TempQueue.getInstance();
-
+  public static void main(String[] args) throws SQLException, InterruptedException, IOException {
+    setUp();
     ScheduledExecutorService exec = Executors.newScheduledThreadPool(corePoolSize);
+
     exec.scheduleAtFixedRate(
         new Thread(new TempReader(), "TempReader"), 0, tempReaderFrequency, TimeUnit.SECONDS);
     exec.scheduleAtFixedRate(
@@ -36,11 +44,7 @@ public class Main {
         TimeUnit.SECONDS);
     exec.scheduleAtFixedRate(
         new Thread(new TempSender(piSerial), "Sender"), 11, senderFrequency, TimeUnit.SECONDS);
-
-    while (true) {
-      log.info("Queue size: " + queue.getQueueLen());
-      log.info("Entries in db: " + DatabaseManager.countMeasurementsInDb());
-      Thread.sleep(10000);
-    }
+    exec.scheduleAtFixedRate(
+        new Thread(new StatusMonitor(), "Monitor"), 0, monitorFrequency, TimeUnit.SECONDS);
   }
 }
