@@ -1,50 +1,95 @@
 package eu.alehem.tempserver.remote;
 
+import com.google.gson.Gson;
 import com.pi4j.system.SystemInfo;
-import eu.alehem.tempserver.remote.properties.ApplicationProperties;
+import eu.alehem.tempserver.remote.argparser.ArgParser;
+import eu.alehem.tempserver.remote.argparser.Arguments;
+import eu.alehem.tempserver.remote.exceptions.InvalidArgumentsException;
+import eu.alehem.tempserver.remote.json.JsonProperties;
+import eu.alehem.tempserver.remote.properties.PersistenceProperties;
+import eu.alehem.tempserver.remote.properties.ReaderProperties;
+import eu.alehem.tempserver.remote.properties.SenderProperties;
+import eu.alehem.tempserver.remote.workers.PersistenceHandler;
+import eu.alehem.tempserver.remote.workers.StatusMonitor;
+import eu.alehem.tempserver.remote.workers.TempReader;
+import eu.alehem.tempserver.remote.workers.TempSender;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.java.Log;
+import org.apache.commons.cli.CommandLine;
 
 @Log
 public class Main {
 
-  private static int tempReaderFrequency;
-  private static int persistenceHandlerFrequency;
-  private static int senderFrequency;
-  private static int monitorFrequency;
-  private static int corePoolSize;
-  private static String piSerial;
+  public static void main(String... args) throws SQLException, InterruptedException {
 
-  private static void setUp() throws IOException, InterruptedException {
-    ApplicationProperties properties = ApplicationProperties.getInstance();
+    try {
+      CommandLine cmd =
+          ArgParser.parseOptions(args)
+              .orElseThrow(() -> new InvalidArgumentsException("Failed to parse arguments"));
+      JsonProperties jsonProperties = readJsonProperties(cmd);
+      ReaderProperties readerProperties = new ReaderProperties(cmd, jsonProperties);
+      SenderProperties senderProperties = new SenderProperties(cmd, jsonProperties);
+      PersistenceProperties persistenceProperties = new PersistenceProperties(cmd);
 
-    tempReaderFrequency = Integer.valueOf(properties.getProperty("tempreader.frequency.seconds"));
-    persistenceHandlerFrequency =
-        Integer.valueOf(properties.getProperty("persistencehandler.frequency.seconds"));
-    senderFrequency = Integer.valueOf(properties.getProperty("sender.frequency.seconds"));
-    corePoolSize = Integer.valueOf(properties.getProperty("main.core_pool_size"));
-    monitorFrequency = Integer.valueOf(properties.getProperty("main.monitor_frequency"));
-    piSerial = SystemInfo.getSerial();
+      final String piSerial = SystemInfo.getSerial();
+
+      ScheduledExecutorService exec = Executors.newScheduledThreadPool(4);
+      exec.scheduleAtFixedRate(
+          new Thread(new TempReader(readerProperties), "TempReader"),
+          0,
+          readerProperties.getReaderFrequency(),
+          TimeUnit.SECONDS);
+      exec.scheduleAtFixedRate(
+          new Thread(new PersistenceHandler(persistenceProperties), "PersistenceHandler"),
+          3,
+          persistenceProperties.getRunfrequency(),
+          TimeUnit.SECONDS);
+      exec.scheduleAtFixedRate(
+          new Thread(new TempSender(piSerial, senderProperties), "Sender"),
+          11,
+          senderProperties.getSenderFrequency(),
+          TimeUnit.SECONDS);
+
+      if (cmd.hasOption(Arguments.VERBOSE.getShortOption())) {
+        exec.scheduleAtFixedRate(
+            new Thread(new StatusMonitor(), "Monitor"), 0, 10, TimeUnit.SECONDS);
+      }
+
+    } catch (InvalidArgumentsException | IOException e) {
+      System.out.println(e.getMessage());
+      System.exit(1);
+    }
   }
 
-  public static void main(String[] args) throws SQLException, InterruptedException, IOException {
-    setUp();
-    ScheduledExecutorService exec = Executors.newScheduledThreadPool(corePoolSize);
-
-    exec.scheduleAtFixedRate(
-        new Thread(new TempReader(), "TempReader"), 0, tempReaderFrequency, TimeUnit.SECONDS);
-    exec.scheduleAtFixedRate(
-        new Thread(new PersistenceHandler(), "PersistenceHandler"),
-        3,
-        persistenceHandlerFrequency,
-        TimeUnit.SECONDS);
-    exec.scheduleAtFixedRate(
-        new Thread(new TempSender(piSerial), "Sender"), 11, senderFrequency, TimeUnit.SECONDS);
-    exec.scheduleAtFixedRate(
-        new Thread(new StatusMonitor(), "Monitor"), 0, monitorFrequency, TimeUnit.SECONDS);
+  private static JsonProperties readJsonProperties(CommandLine cmd)
+      throws InvalidArgumentsException, FileNotFoundException {
+    JsonProperties jsonProperties;
+    if (cmd.hasOption(Arguments.SKIP_PROPERTIES_FILE.getShortOption())) {
+      if (!cmd.hasOption(Arguments.SENDER_UUID.getLongOption())
+          || !cmd.hasOption(Arguments.SERVER_ADDRESS.getLongOption())
+          || !cmd.hasOption(Arguments.READ_FREQUENCY.getLongOption())) {
+        throw new InvalidArgumentsException(
+            "Must supply remote-id, server-address and read-freq when skipping json!");
+      }
+      jsonProperties =
+          new JsonProperties(
+              UUID.fromString(cmd.getOptionValue(Arguments.SENDER_UUID.getLongOption())),
+              cmd.getOptionValue(Arguments.SERVER_ADDRESS.getLongOption()),
+              Integer.valueOf(Arguments.READ_FREQUENCY.getLongOption()));
+    } else {
+      String propertiesPath =
+          cmd.hasOption(Arguments.PROPERTIES_FILE.getShortOption())
+              ? cmd.getOptionValue(Arguments.PROPERTIES_FILE.getShortOption())
+              : "properties.json";
+      jsonProperties = new Gson().fromJson(new FileReader(propertiesPath), JsonProperties.class);
+    }
+    return jsonProperties;
   }
 }

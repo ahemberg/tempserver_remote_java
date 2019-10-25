@@ -1,4 +1,4 @@
-package eu.alehem.tempserver.remote;
+package eu.alehem.tempserver.remote.json;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.UUID;
@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-class ServerTemperatureResponse {
+public class ServerTemperatureResponse {
   @SerializedName("save_successful")
   private boolean saveSuccessful;
 

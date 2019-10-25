@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode
 @AllArgsConstructor
-class Temperature {
+public class Temperature {
 
   private final UUID id;
   private final String probeSerial;

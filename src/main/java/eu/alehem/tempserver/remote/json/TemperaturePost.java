@@ -1,6 +1,7 @@
-package eu.alehem.tempserver.remote;
+package eu.alehem.tempserver.remote.json;
 
 import com.google.gson.annotations.SerializedName;
+import eu.alehem.tempserver.remote.json.TemperatureMeasurement;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +16,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-class TemperaturePost {
+public class TemperaturePost {
 
   @SerializedName("id")
   private UUID remoteId;

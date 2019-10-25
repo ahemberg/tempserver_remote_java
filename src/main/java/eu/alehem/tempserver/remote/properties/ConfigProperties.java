@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class ApplicationProperties {
+public class ConfigProperties {
 
   private final Properties properties;
 
-  private ApplicationProperties() {
+  private ConfigProperties() {
     try {
       properties = getProperties();
     } catch (IOException e) {
@@ -16,13 +16,13 @@ public class ApplicationProperties {
     }
   }
 
-  public static ApplicationProperties getInstance() {
+  public static ConfigProperties getInstance() {
     return SingletonHelper.INSTANCE;
   }
 
   private Properties getProperties() throws IOException {
     InputStream input =
-        ApplicationProperties.class.getClassLoader().getResourceAsStream("config.properties");
+        ConfigProperties.class.getClassLoader().getResourceAsStream("config.properties");
     Properties prop = new Properties();
 
     prop.load(input);
@@ -34,6 +34,6 @@ public class ApplicationProperties {
   }
 
   private static class SingletonHelper {
-    private static final ApplicationProperties INSTANCE = new ApplicationProperties();
+    private static final ConfigProperties INSTANCE = new ConfigProperties();
   }
 }
