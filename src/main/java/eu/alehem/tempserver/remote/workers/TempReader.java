@@ -1,9 +1,12 @@
-package eu.alehem.tempserver.remote;
+package eu.alehem.tempserver.remote.workers;
 
 import com.pi4j.component.temperature.TemperatureSensor;
 import com.pi4j.component.temperature.impl.TmpDS18B20DeviceType;
 import com.pi4j.io.w1.W1Device;
 import com.pi4j.io.w1.W1Master;
+import eu.alehem.tempserver.remote.TempQueue;
+import eu.alehem.tempserver.remote.Temperature;
+import eu.alehem.tempserver.remote.properties.ReaderProperties;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -14,11 +17,18 @@ import lombok.extern.java.Log;
 public class TempReader implements Runnable {
 
   private final List<W1Device> probes = getTempProbes();
+  private final ReaderProperties properties;
   private TempQueue queue = TempQueue.getInstance();
+
+  public TempReader(ReaderProperties properties) {
+    this.properties = properties;
+  }
 
   @Override
   public void run() {
-    log.info("Reading temperatures");
+    if (properties.isVerbose()) {
+      log.info("Reading temperatures");
+    }
     probes.stream()
         .map(this::getTemperature)
         .collect(Collectors.toList())

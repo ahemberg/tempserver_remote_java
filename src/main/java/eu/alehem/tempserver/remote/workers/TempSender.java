@@ -1,15 +1,19 @@
-package eu.alehem.tempserver.remote;
+package eu.alehem.tempserver.remote.workers;
 
 import com.google.gson.Gson;
+import eu.alehem.tempserver.remote.json.ServerTemperatureResponse;
+import eu.alehem.tempserver.remote.TempQueue;
+import eu.alehem.tempserver.remote.Temperature;
+import eu.alehem.tempserver.remote.json.TemperatureMeasurement;
+import eu.alehem.tempserver.remote.json.TemperaturePost;
 import eu.alehem.tempserver.remote.exceptions.ServerCommsFailedException;
-import eu.alehem.tempserver.remote.properties.ApplicationProperties;
+import eu.alehem.tempserver.remote.properties.SenderProperties;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.apache.http.HttpResponse;
@@ -22,18 +26,13 @@ import org.apache.http.impl.client.HttpClientBuilder;
 @Log
 public class TempSender implements Runnable {
 
-  private final int BATCH_SIZE;
   private final String mySerial;
-  private final UUID myID;
-  private final String serverAddress;
+  private final SenderProperties properties;
   private TempQueue queue = TempQueue.getInstance();
 
-  TempSender(String mySerial) {
-    ApplicationProperties properties = ApplicationProperties.getInstance();
+  public TempSender(String mySerial, SenderProperties properties) {
     this.mySerial = mySerial;
-    this.BATCH_SIZE = Integer.valueOf(properties.getProperty("sender.batch_size"));
-    this.myID = UUID.fromString(properties.getProperty("sender.pi_uuid"));
-    this.serverAddress = properties.getProperty("sender.server_address");
+    this.properties = properties;
   }
 
   @Override
@@ -43,7 +42,7 @@ public class TempSender implements Runnable {
     }
 
     queue.setRemoveLock(true);
-    Set<Temperature> temperatures = queue.getN(BATCH_SIZE);
+    Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
 
     List<TemperatureMeasurement> temperatureMeasurements =
         temperatures.stream()
@@ -53,12 +52,13 @@ public class TempSender implements Runnable {
                         t.getId(), t.getMeasurementTime(), t.getTemperature()))
             .collect(Collectors.toList());
 
-    TemperaturePost postData = new TemperaturePost(myID, mySerial, temperatureMeasurements);
+    TemperaturePost postData =
+        new TemperaturePost(properties.getRemoteId(), mySerial, temperatureMeasurements);
 
     try {
       ServerTemperatureResponse response = sendToServer(new Gson().toJson(postData));
       if (response.isSaveSuccessful()) {
-        log.info("Server response: " + response.getMessage());
+        if (properties.isVerbose()) log.info("Server response: " + response.getMessage());
         Set<Temperature> temperaturesSavedOnServer =
             temperatureMeasurements.stream()
                 .filter(m -> response.getSavedMeasurements().contains(m.getMeasurementId()))
@@ -70,7 +70,7 @@ public class TempSender implements Runnable {
                             .get(0))
                 .collect(Collectors.toSet());
 
-        log.info("Removing temperatures from queue");
+        if (properties.isVerbose()) log.info("Removing temperatures from queue");
         queue.setRemoveLock(false);
         queue.removeTemperatures(temperaturesSavedOnServer);
       } else {
@@ -79,7 +79,7 @@ public class TempSender implements Runnable {
         log.warning("Server message: " + response.getMessage());
       }
     } catch (ServerCommsFailedException e) {
-      log.info(e.getMessage());
+      log.warning(e.getMessage());
     }
     queue.setRemoveLock(false);
   }
@@ -87,9 +87,9 @@ public class TempSender implements Runnable {
   private ServerTemperatureResponse sendToServer(String jsonData)
       throws ServerCommsFailedException {
     try {
-      log.info("Sending to server");
+      if (properties.isVerbose()) log.info("Sending to server");
       HttpClient client = HttpClientBuilder.create().build();
-      HttpPost httpPost = new HttpPost(serverAddress);
+      HttpPost httpPost = new HttpPost(properties.getServerAddress());
 
       StringEntity entity = new StringEntity(jsonData, ContentType.APPLICATION_JSON);
       httpPost.setEntity(entity);

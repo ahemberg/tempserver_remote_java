@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-final class DatabaseManager {
+public final class DatabaseManager {
 
   private static final String DEFAULT_DATABASE_URL = "jdbc:sqlite:tempremote.db";
   private static final String DATABASE_SCHEMA =
@@ -38,7 +38,7 @@ final class DatabaseManager {
     };
   }
 
-  static void createDataBaseIfNotExists() throws SQLException {
+  public static void createDataBaseIfNotExists() throws SQLException {
     createDataBaseIfNotExists(DEFAULT_DATABASE_URL);
   }
 
@@ -50,7 +50,7 @@ final class DatabaseManager {
     c.close();
   }
 
-  static void insertTemperatures(final Set<Temperature> temperatures) throws SQLException {
+  public static void insertTemperatures(final Set<Temperature> temperatures) throws SQLException {
     insertTemperatures(temperatures, DEFAULT_DATABASE_URL);
   }
 
@@ -76,7 +76,7 @@ final class DatabaseManager {
     c.close();
   }
 
-  static Set<Temperature> getTemperatures(final int limit) throws SQLException {
+  public static Set<Temperature> getTemperatures(final int limit) throws SQLException {
     return getTemperatures(limit, DEFAULT_DATABASE_URL);
   }
 
@@ -106,7 +106,7 @@ final class DatabaseManager {
   }
 
   // TODO: It should be safe to only consider temp_id.
-  static void deleteTemperature(Temperature temperature) throws SQLException {
+  public static void deleteTemperature(Temperature temperature) throws SQLException {
     deleteTemperature(temperature, DEFAULT_DATABASE_URL);
   }
 
@@ -127,7 +127,7 @@ final class DatabaseManager {
     c.close();
   }
 
-  static void deleteTemperatures(Set<Temperature> temperatures) throws SQLException {
+  public static void deleteTemperatures(Set<Temperature> temperatures) throws SQLException {
     deleteTemperatures(temperatures, DEFAULT_DATABASE_URL);
   }
 
@@ -153,7 +153,7 @@ final class DatabaseManager {
     c.close();
   }
 
-  static int countMeasurementsInDb() throws SQLException {
+  public static int countMeasurementsInDb() throws SQLException {
     return countMeasurementsInDb(DEFAULT_DATABASE_URL);
   }
 

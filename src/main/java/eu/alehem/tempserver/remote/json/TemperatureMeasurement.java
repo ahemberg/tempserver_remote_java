@@ -1,4 +1,4 @@
-package eu.alehem.tempserver.remote;
+package eu.alehem.tempserver.remote.json;
 
 import com.google.gson.annotations.SerializedName;
 import java.time.Instant;
@@ -15,7 +15,7 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-class TemperatureMeasurement {
+public class TemperatureMeasurement {
   @SerializedName("id")
   private UUID measurementId;
 

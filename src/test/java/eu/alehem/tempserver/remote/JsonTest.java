@@ -1,6 +1,8 @@
 package eu.alehem.tempserver.remote;
 
 import com.google.gson.Gson;
+import eu.alehem.tempserver.remote.json.TemperatureMeasurement;
+import eu.alehem.tempserver.remote.json.TemperaturePost;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;

@@ -4,50 +4,50 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-class TempQueue {
+public class TempQueue {
 
   private Set<Temperature> measurementSet = new HashSet<>();
   private boolean removeLock = false;
 
   private TempQueue() {}
 
-  static TempQueue getInstance() {
+  public static TempQueue getInstance() {
     return InstanceHolder.instance;
   }
 
-  synchronized void addTemperature(Temperature temperature) {
+  public synchronized void addTemperature(Temperature temperature) {
     measurementSet.add(temperature);
   }
 
-  synchronized void addTemperatures(Set<Temperature> temperatures) {
+  public synchronized void addTemperatures(Set<Temperature> temperatures) {
     measurementSet.addAll(temperatures);
   }
 
-  synchronized void removeTemperature(Temperature temperature) {
+  public synchronized void removeTemperature(Temperature temperature) {
     if (removeLock) return;
     measurementSet.remove(temperature);
   }
 
-  synchronized void removeTemperatures(Set<Temperature> temperatures) {
+  public synchronized void removeTemperatures(Set<Temperature> temperatures) {
     if (removeLock) return;
     temperatures.forEach(measurementSet::remove);
   }
 
-  synchronized int getQueueLen() {
+  public synchronized int getQueueLen() {
     return measurementSet.size();
   }
 
-  synchronized Temperature getOne() {
+  public synchronized Temperature getOne() {
     return measurementSet.stream().findFirst().orElse(null);
   }
 
-  synchronized Set<Temperature> getN(int n) {
+  public synchronized Set<Temperature> getN(int n) {
     final int queueLength = getQueueLen();
     n = n > queueLength ? queueLength : n;
     return new HashSet<>(new ArrayList<>(measurementSet).subList(0, n));
   }
 
-  synchronized void setRemoveLock(boolean locked) {
+  public synchronized void setRemoveLock(boolean locked) {
     this.removeLock = locked;
   }
 

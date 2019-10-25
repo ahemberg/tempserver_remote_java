@@ -1,6 +1,9 @@
-package eu.alehem.tempserver.remote;
+package eu.alehem.tempserver.remote.workers;
 
-import eu.alehem.tempserver.remote.properties.ApplicationProperties;
+import eu.alehem.tempserver.remote.DatabaseManager;
+import eu.alehem.tempserver.remote.TempQueue;
+import eu.alehem.tempserver.remote.Temperature;
+import eu.alehem.tempserver.remote.properties.PersistenceProperties;
 import java.sql.SQLException;
 import java.util.Set;
 import lombok.extern.java.Log;
@@ -8,37 +11,29 @@ import lombok.extern.java.Log;
 @Log
 public class PersistenceHandler implements Runnable {
 
-  private final int MAX_QUEUE_LEN;
-  private final int DELETE_THRESHOLD;
-  private final int ADD_THRESHOLD;
-  private final int BATCH_SIZE;
+  private final PersistenceProperties properties;
   private int entriesInDb;
-
   private TempQueue queue = TempQueue.getInstance();
 
-  PersistenceHandler() throws SQLException {
+  public PersistenceHandler(PersistenceProperties properties) throws SQLException {
+    this.properties = properties;
     DatabaseManager.createDataBaseIfNotExists();
     entriesInDb = DatabaseManager.countMeasurementsInDb();
-    ApplicationProperties properties = ApplicationProperties.getInstance();
-    MAX_QUEUE_LEN = Integer.valueOf(properties.getProperty("persistencehandler.max_queue_len"));
-    DELETE_THRESHOLD =
-        Integer.valueOf(properties.getProperty("persistencehandler.delete_threshold"));
-    ADD_THRESHOLD = Integer.valueOf(properties.getProperty("persistencehandler.add_threshold"));
-    BATCH_SIZE = Integer.valueOf(properties.getProperty("persistencehandler.batch_size"));
   }
 
   private void populateQueueFromDb() throws SQLException {
-    log.info("Populating queue from db");
-    Set<Temperature> temperatures = DatabaseManager.getTemperatures(BATCH_SIZE);
+    if (properties.isVerbose()) log.info("Populating queue from db");
+    Set<Temperature> temperatures = DatabaseManager.getTemperatures(properties.getBatchSize());
     queue.addTemperatures(temperatures);
     DatabaseManager.deleteTemperatures(temperatures);
     entriesInDb = DatabaseManager.countMeasurementsInDb();
-    log.info("Successfully populated from db. DB now has " + entriesInDb + " entries");
+    if (properties.isVerbose())
+      log.info("Successfully populated from db. DB now has " + entriesInDb + " entries");
   }
 
   private void populateDbFromQueue() throws SQLException {
-    log.info("Moving items from queue to DB");
-    Set<Temperature> temperatures = queue.getN(BATCH_SIZE);
+    if (properties.isVerbose()) log.info("Moving items from queue to DB");
+    Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
     DatabaseManager.insertTemperatures(temperatures);
     queue.removeTemperatures(temperatures);
   }
@@ -54,7 +49,7 @@ public class PersistenceHandler implements Runnable {
       return;
     }
 
-    if (queLen < ADD_THRESHOLD && entriesInDb != 0) {
+    if (queLen < properties.getAddThreshold() && entriesInDb != 0) {
       try {
         populateQueueFromDb();
         return;
@@ -64,7 +59,7 @@ public class PersistenceHandler implements Runnable {
       }
     }
 
-    if (queLen > MAX_QUEUE_LEN) {
+    if (queLen > properties.getMaxQueueLength()) {
       try {
         populateDbFromQueue();
         return;
@@ -74,9 +69,9 @@ public class PersistenceHandler implements Runnable {
       }
     }
 
-    if (queLen > DELETE_THRESHOLD) {
+    if (queLen > properties.getMaxQueueLength()) {
       log.warning("WARNING: QUEUE is too long, will start to delete entries");
-      Set<Temperature> temperatures = queue.getN(BATCH_SIZE);
+      Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
       temperatures.forEach(t -> queue.removeTemperature(t));
     }
   }

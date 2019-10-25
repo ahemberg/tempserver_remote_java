@@ -1,5 +1,7 @@
-package eu.alehem.tempserver.remote;
+package eu.alehem.tempserver.remote.workers;
 
+import eu.alehem.tempserver.remote.DatabaseManager;
+import eu.alehem.tempserver.remote.TempQueue;
 import java.sql.SQLException;
 import lombok.extern.java.Log;
 
