@@ -29,6 +29,8 @@ public class Main {
 
   public static void main(String... args) throws SQLException, InterruptedException {
 
+    //TODO: Move parse-logic to argparser
+
     try {
       CommandLine cmd =
           ArgParser.parseOptions(args)
