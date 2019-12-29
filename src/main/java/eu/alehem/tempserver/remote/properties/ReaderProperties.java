@@ -19,7 +19,7 @@ public class ReaderProperties implements Properties {
 
   private void parseFromConfig() {
     ConfigProperties config = ConfigProperties.getInstance();
-    readerFrequency = Integer.valueOf(config.getProperty("reader.frequency.seconds"));
+    readerFrequency = Integer.parseInt(config.getProperty("reader.frequency.seconds"));
   }
 
   private void parseFromCmdLine(CommandLine cmd) {
@@ -29,7 +29,7 @@ public class ReaderProperties implements Properties {
 
     if (cmd.hasOption(Arguments.READ_FREQUENCY.getLongOption())) {
       readerFrequency =
-          Integer.valueOf(cmd.getOptionValue(Arguments.READ_FREQUENCY.getLongOption()));
+          Integer.parseInt(cmd.getOptionValue(Arguments.READ_FREQUENCY.getLongOption()));
     }
   }
 
