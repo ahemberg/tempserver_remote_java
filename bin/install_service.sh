@@ -28,7 +28,7 @@ echo "Description=Tempremote Daemon" >> ${SERVICE_FILE}
 echo "After=network.target" >> ${SERVICE_FILE}
 echo "[Service]" >> ${SERVICE_FILE}
 echo "User=$USER" >> ${SERVICE_FILE}
-echo "ExecStart=/usr/bin/java -jar bin.jar -s" >> ${SERVICE_FILE}
+echo "ExecStart=/usr/bin/java -jar bin.jar -v" >> ${SERVICE_FILE}
 echo "WorkingDirectory=$PROGRAM_DIR" >> ${SERVICE_FILE}
 echo "Restart=always" >> ${SERVICE_FILE}
 echo "[Install]" >> ${SERVICE_FILE}

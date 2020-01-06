@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 AmIRoot()
 {
     ! (( ${EUID:-0} || $(id -u) ))
@@ -32,8 +34,8 @@ if [[ $? == 0 ]] ; then
   systemctl reset-failed
 fi
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+#DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 rm /usr/local/bin/measure-temp
-rm -rf ${DIR}
+rm -rf /opt/tempserver-remote/
 
 
