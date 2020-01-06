@@ -37,13 +37,9 @@ public class TempQueue {
     return measurementSet.size();
   }
 
-  public synchronized Temperature getOne() {
-    return measurementSet.stream().findFirst().orElse(null);
-  }
-
   public synchronized Set<Temperature> getN(int n) {
     final int queueLength = getQueueLen();
-    n = n > queueLength ? queueLength : n;
+    n = Math.min(n, queueLength);
     return new HashSet<>(new ArrayList<>(measurementSet).subList(0, n));
   }
 
