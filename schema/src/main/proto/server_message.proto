@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package eu.alehem.tempserver;
+
+option optimize_for = SPEED;
+
+option java_package = "eu.alehem.tempserver.remote.proto";
+option java_outer_classname = "Tempserver";
+
+message Measurement {
+    double temperature = 1;
+    string id = 2;
+    int64 timestamp = 3;
+}
+
+message ServerMessage {
+    string remoteid = 1;
+    repeated Measurement measurements = 2;
+}
+
+message ServerResponse {
+    bool saveSuccess = 1;
+    repeated string measurementIds = 2;
+    int32 responseCode = 3;
+    string message = 4;
+}
