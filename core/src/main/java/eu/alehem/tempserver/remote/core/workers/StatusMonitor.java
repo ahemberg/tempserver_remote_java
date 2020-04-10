@@ -3,9 +3,9 @@ package eu.alehem.tempserver.remote.core.workers;
 import eu.alehem.tempserver.remote.core.DatabaseManager;
 import eu.alehem.tempserver.remote.core.TempQueue;
 import java.sql.SQLException;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 public class StatusMonitor implements Runnable {
 
   @Override
@@ -14,8 +14,8 @@ public class StatusMonitor implements Runnable {
     log.info("Queue size: " + queue.getQueueLen());
     try {
     log.info("Entries in db: " + DatabaseManager.countMeasurementsInDb());
-    } catch (SQLException s) {
-      log.warning("Failed to count entries in db");
+    } catch (SQLException e) {
+      log.warn("Failed to count entries in db", e);
     }
   }
 

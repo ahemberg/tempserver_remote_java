@@ -6,9 +6,9 @@ import eu.alehem.tempserver.remote.core.Temperature;
 import eu.alehem.tempserver.remote.core.properties.PersistenceProperties;
 import java.sql.SQLException;
 import java.util.Set;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 public class PersistenceHandler implements Runnable {
 
   private final PersistenceProperties properties;
@@ -45,7 +45,7 @@ public class PersistenceHandler implements Runnable {
     try {
       entriesInDb = DatabaseManager.countMeasurementsInDb();
     } catch (SQLException e) {
-      log.warning("Failed to count elements in database");
+      log.warn("Failed to count elements in database", e);
       return;
     }
 
@@ -54,8 +54,7 @@ public class PersistenceHandler implements Runnable {
         populateQueueFromDb();
         return;
       } catch (SQLException e) {
-        log.warning("Failed to get temperatures from db");
-        log.warning(e.getMessage());
+        log.warn("Failed to get temperatures from db", e);
       }
     }
 
@@ -64,13 +63,12 @@ public class PersistenceHandler implements Runnable {
         populateDbFromQueue();
         return;
       } catch (SQLException e) {
-        log.warning("Failed to save temperatures to db");
-        log.warning(e.getMessage());
+        log.warn("Failed to save temperatures to db", e);
       }
     }
 
     if (queLen > properties.getMaxQueueLength()) {
-      log.warning("WARNING: QUEUE is too long, will start to delete entries");
+      log.warn("WARNING: QUEUE is too long, will start to delete entries");
       Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
       temperatures.forEach(t -> queue.removeTemperature(t));
     }
