@@ -11,9 +11,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 
-@Log
+@Slf4j
 public class TempReader implements Runnable {
 
   private final List<W1Device> probes = getTempProbes();
