@@ -5,14 +5,14 @@
     <parent>
         <artifactId>tempremote</artifactId>
         <groupId>eu.alehem.tempserver.remote</groupId>
-        <version>1.0.1</version>
+        <version>1.1.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <dependencies>
         <dependency>
             <groupId>eu.alehem.tempserver.remote</groupId>
             <artifactId>schema</artifactId>
-            <version>1.0.1</version>
+            <version>1.1.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
