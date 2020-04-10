@@ -4,18 +4,20 @@ package eu.alehem.tempserver;
 
 option optimize_for = SPEED;
 
-option java_package = "eu.alehem.tempserver.remote.proto";
+option java_package = "eu.alehem.tempserver.schema.proto";
 option java_outer_classname = "Tempserver";
 
 message Measurement {
     double temperature = 1;
     string id = 2;
     int64 timestamp = 3;
+    string probeserial = 4;
 }
 
 message ServerMessage {
-    string remoteid = 1;
-    repeated Measurement measurements = 2;
+    string remoteId = 1;
+    string remoteSerial = 2;
+    repeated Measurement measurements = 3;
 }
 
 message ServerResponse {

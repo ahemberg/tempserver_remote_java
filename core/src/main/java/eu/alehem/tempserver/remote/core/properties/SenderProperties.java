@@ -7,7 +7,7 @@ import lombok.Getter;
 import org.apache.commons.cli.CommandLine;
 
 @Getter
-public class SenderProperties implements Properties {
+public final class SenderProperties implements Properties {
 
   private boolean verbose;
   private int batchSize;
@@ -23,8 +23,8 @@ public class SenderProperties implements Properties {
 
   private void parseFromConfig() {
     ConfigProperties config = ConfigProperties.getInstance();
-    senderFrequency = Integer.valueOf(config.getProperty("sender.frequency.seconds"));
-    batchSize = Integer.valueOf(config.getProperty("sender.batch_size"));
+    senderFrequency = Integer.parseInt(config.getProperty("sender.frequency.seconds"));
+    batchSize = Integer.parseInt(config.getProperty("sender.batch_size"));
   }
 
   private void parseFromCmdLine(CommandLine cmd) {
@@ -33,7 +33,11 @@ public class SenderProperties implements Properties {
     }
 
     if (cmd.hasOption(Arguments.SERVER_ADDRESS.getLongOption())) {
-      remoteId = UUID.fromString(cmd.getOptionValue(Arguments.SERVER_ADDRESS.getLongOption()));
+      serverAddress = cmd.getOptionValue(Arguments.SERVER_ADDRESS.getLongOption());
+    }
+
+    if (cmd.hasOption(Arguments.SENDER_UUID.getLongOption())) {
+      remoteId = UUID.fromString(cmd.getOptionValue(Arguments.SENDER_UUID.getLongOption()));
     }
   }
 

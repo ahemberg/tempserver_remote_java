@@ -8,8 +8,6 @@
         <version>1.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>core</artifactId>
     <dependencies>
         <dependency>
             <groupId>eu.alehem.tempserver.remote</groupId>
@@ -19,5 +17,9 @@
         </dependency>
     </dependencies>
 
+    <properties>
+        <skip.assembly>false</skip.assembly>
+    </properties>
 
+    <artifactId>core</artifactId>
 </project>

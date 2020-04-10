@@ -7,14 +7,14 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class JsonProperties {
+public final class JsonProperties {
 
   @SerializedName("remote_id")
-  private UUID remoteId;
+  private final UUID remoteId;
 
   @SerializedName("server_address")
-  private String serverAddress;
+  private final String serverAddress;
 
   @SerializedName("read_freq")
-  private Integer measurementFrequency;
+  private final Integer measurementFrequency;
 }
