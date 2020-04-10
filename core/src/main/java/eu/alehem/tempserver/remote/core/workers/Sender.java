@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class Sender implements Runnable {
 
-
   private final String mySerial;
   private final SenderProperties properties;
   private final TempQueue queue = TempQueue.getInstance();
