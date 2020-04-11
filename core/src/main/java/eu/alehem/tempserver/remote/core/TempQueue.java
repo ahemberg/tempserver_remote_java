@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class TempQueue {
 
@@ -36,9 +37,10 @@ public class TempQueue {
 
   public synchronized void removeTemperaturesById(final Set<UUID> ids) {
     if (removeLock) return;
-    measurementSet.stream()
+    final Set<Temperature> temperaturesToRemove = measurementSet.stream()
             .filter(m -> ids.stream().anyMatch(id -> id.equals(m.getId())))
-            .forEach(m -> measurementSet.remove(m));
+            .collect(Collectors.toSet());
+    removeTemperatures(temperaturesToRemove);
   }
 
   public synchronized int getQueueLen() {

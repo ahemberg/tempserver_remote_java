@@ -32,39 +32,48 @@ public class Sender implements Runnable {
 
   @Override
   public void run() {
-
-    queue.setRemoveLock(true);
-    final Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
-
-    final Tempserver.ServerMessage serverMessage =
-        Tempserver.ServerMessage.newBuilder()
-            .setRemoteId(properties.getRemoteId().toString())
-            .setRemoteSerial(mySerial)
-            .addAllMeasurements(makeProtoMessages(temperatures))
-            .build();
-
-    final Tempserver.ServerResponse response;
     try {
-      response = sendToServer(serverMessage.toByteArray());
-    } catch (ServerCommsFailedException e) {
-      log.warn("Server communication failed", e);
-      queue.setRemoveLock(false);
-      return;
-    }
+      queue.setRemoveLock(true);
+      final Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
 
-    if (response.getSaveSuccess()) {
-      if (properties.isVerbose()) log.info("Server response: " + response.getMessage());
-      if (properties.isVerbose()) log.info("Removing temperatures from queue");
-      queue.setRemoveLock(false);
-      queue.removeTemperaturesById(
-          response.getMeasurementIdsList().stream()
-              .filter(Sender::isValidUUID)
-              .map(UUID::fromString)
-              .collect(Collectors.toSet()));
-    } else {
-      log.warn("Server rejected transaction");
-      log.warn("Server status: " + response.getResponseCode());
-      log.warn("Server message: " + response.getMessage());
+      if (temperatures.isEmpty()) {
+        queue.setRemoveLock(false);
+        return;
+      }
+
+      final Tempserver.ServerMessage serverMessage =
+          Tempserver.ServerMessage.newBuilder()
+              .setRemoteId(properties.getRemoteId().toString())
+              .setRemoteSerial(mySerial)
+              .addAllMeasurements(makeProtoMessages(temperatures))
+              .build();
+
+      final Tempserver.ServerResponse response;
+      try {
+        response = sendToServer(serverMessage.toByteArray());
+      } catch (ServerCommsFailedException e) {
+        log.warn("Server communication failed", e);
+        queue.setRemoveLock(false);
+        return;
+      }
+
+      if (response.getSaveSuccess()) {
+        if (properties.isVerbose()) log.info("Server response: " + response.getMessage());
+        if (properties.isVerbose()) log.info("Removing temperatures from queue");
+        queue.setRemoveLock(false);
+        queue.removeTemperaturesById(
+            response.getMeasurementIdsList().stream()
+                .filter(Sender::isValidUUID)
+                .map(UUID::fromString)
+                .collect(Collectors.toSet()));
+        if (properties.isVerbose()) log.info("Done sending batch");
+      } else {
+        log.warn("Server rejected transaction");
+        log.warn("Server status: " + response.getResponseCode());
+        log.warn("Server message: " + response.getMessage());
+      }
+    } catch (Exception e) {
+      log.warn("Sender crashed with exception!", e);
     }
   }
 
@@ -92,7 +101,8 @@ public class Sender implements Runnable {
     }
   }
 
-  private static Set<Tempserver.Measurement> makeProtoMessages(final Set<Temperature> temperatures) {
+  private static Set<Tempserver.Measurement> makeProtoMessages(
+      final Set<Temperature> temperatures) {
     return temperatures.stream()
         .map(
             t ->

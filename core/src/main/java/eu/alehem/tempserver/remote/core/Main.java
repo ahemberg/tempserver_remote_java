@@ -44,7 +44,6 @@ public class Main {
     MY_SERIAL = mySerial;
   }
 
-
   public static void main(String... args) throws SQLException, InterruptedException {
 
     Runtime.getRuntime().addShutdownHook(new Thread(new Shutdown()));
@@ -70,10 +69,10 @@ public class Main {
           persistenceProperties.getRunfrequency(),
           TimeUnit.SECONDS);
       exec.scheduleAtFixedRate(
-                new Thread(new Sender(MY_SERIAL, senderProperties), "Sender"),
-                11,
-                senderProperties.getSenderFrequency(),
-                TimeUnit.SECONDS);
+          new Thread(new Sender(MY_SERIAL, senderProperties), "Sender"),
+          11,
+          senderProperties.getSenderFrequency(),
+          TimeUnit.SECONDS);
 
       if (cmd.hasOption(Arguments.VERBOSE.getShortOption())) {
         exec.scheduleAtFixedRate(
