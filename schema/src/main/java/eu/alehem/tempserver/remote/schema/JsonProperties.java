@@ -1,9 +1,10 @@
 package eu.alehem.tempserver.remote.schema;
 
 import com.google.gson.annotations.SerializedName;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.UUID;
 
 @AllArgsConstructor
 @Getter

@@ -2,9 +2,10 @@ package eu.alehem.tempserver.remote.core.properties;
 
 import eu.alehem.tempserver.remote.core.argparser.Arguments;
 import eu.alehem.tempserver.remote.schema.JsonProperties;
-import java.util.UUID;
 import lombok.Getter;
 import org.apache.commons.cli.CommandLine;
+
+import java.util.UUID;
 
 @Getter
 public final class SenderProperties implements Properties {

@@ -7,11 +7,12 @@ import com.pi4j.io.w1.W1Master;
 import eu.alehem.tempserver.remote.core.TempQueue;
 import eu.alehem.tempserver.remote.core.Temperature;
 import eu.alehem.tempserver.remote.core.properties.ReaderProperties;
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class TempReader implements Runnable {

@@ -37,7 +37,8 @@ public class TempQueue {
 
   public synchronized void removeTemperaturesById(final Set<UUID> ids) {
     if (removeLock) return;
-    final Set<Temperature> temperaturesToRemove = measurementSet.stream()
+    final Set<Temperature> temperaturesToRemove =
+        measurementSet.stream()
             .filter(m -> ids.stream().anyMatch(id -> id.equals(m.getId())))
             .collect(Collectors.toSet());
     removeTemperatures(temperaturesToRemove);

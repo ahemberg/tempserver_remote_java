@@ -1,10 +1,11 @@
 package eu.alehem.tempserver.remote.core;
 
-import java.time.Instant;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Getter
 @EqualsAndHashCode

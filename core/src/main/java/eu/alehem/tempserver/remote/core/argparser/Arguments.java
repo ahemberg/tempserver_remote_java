@@ -1,8 +1,9 @@
 package eu.alehem.tempserver.remote.core.argparser;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 import java.util.Optional;
-import lombok.Getter;
 
 @Getter
 public enum Arguments {
