@@ -7,22 +7,36 @@ option optimize_for = SPEED;
 option java_package = "eu.alehem.tempserver.schema.proto";
 option java_outer_classname = "Tempserver";
 
-message Measurement {
-    double temperature = 1;
-    string id = 2;
-    int64 timestamp = 3;
-    string probeserial = 4;
+enum MeasurementType {
+    UNKNOWN_TYPE = 0;
+    TEMPERATURE = 1;
 }
 
-message ServerMessage {
+enum ResponseCode {
+    UNKNOWN_RESPONSE = 0;
+    SAVE_OK = 1;
+    INVALID_FORMAT = 2;
+    NO_MEASUREMENTS = 3;
+    INACTIVE = 4;
+    FAILED_TO_SAVE = 5;
+}
+
+message Measurement {
+    MeasurementType type = 1;
+    double value = 2;
+    string id = 3;
+    int64 timestamp = 4;
+    string probeserial = 5;
+}
+
+message MeasurementSaveRequest {
     string remoteId = 1;
     string remoteSerial = 2;
     repeated Measurement measurements = 3;
 }
 
-message ServerResponse {
+message MeasurementSaveResponse {
     bool saveSuccess = 1;
     repeated string measurementIds = 2;
-    int32 responseCode = 3;
-    string message = 4;
+    ResponseCode responseCode = 3;
 }
