@@ -5,11 +5,17 @@ import com.pi4j.system.SystemInfo;
 import eu.alehem.tempserver.remote.core.argparser.ArgParser;
 import eu.alehem.tempserver.remote.core.argparser.Arguments;
 import eu.alehem.tempserver.remote.core.exceptions.InvalidArgumentsException;
-import eu.alehem.tempserver.remote.core.workers.*;
-import eu.alehem.tempserver.remote.schema.JsonProperties;
 import eu.alehem.tempserver.remote.core.properties.PersistenceProperties;
 import eu.alehem.tempserver.remote.core.properties.ReaderProperties;
 import eu.alehem.tempserver.remote.core.properties.SenderProperties;
+import eu.alehem.tempserver.remote.core.workers.PersistenceHandler;
+import eu.alehem.tempserver.remote.core.workers.Sender;
+import eu.alehem.tempserver.remote.core.workers.StatusMonitor;
+import eu.alehem.tempserver.remote.core.workers.TempReader;
+import eu.alehem.tempserver.remote.schema.JsonProperties;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.cli.CommandLine;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -20,9 +26,6 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.cli.CommandLine;
 
 // TODO: Just a thought. Why save persistence to a database? Why not just serialize and dump the
 // queue? Maybe makes things slimmer?
@@ -30,8 +33,8 @@ import org.apache.commons.cli.CommandLine;
 @Slf4j
 public class Main {
 
-  private static ScheduledExecutorService exec = Executors.newScheduledThreadPool(4);
   private static final String MY_SERIAL;
+  private static ScheduledExecutorService exec = Executors.newScheduledThreadPool(4);
 
   static {
     String mySerial = "";

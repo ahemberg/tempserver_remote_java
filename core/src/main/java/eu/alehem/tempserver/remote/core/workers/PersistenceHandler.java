@@ -4,9 +4,10 @@ import eu.alehem.tempserver.remote.core.DatabaseManager;
 import eu.alehem.tempserver.remote.core.TempQueue;
 import eu.alehem.tempserver.remote.core.Temperature;
 import eu.alehem.tempserver.remote.core.properties.PersistenceProperties;
+import lombok.extern.slf4j.Slf4j;
+
 import java.sql.SQLException;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PersistenceHandler implements Runnable {

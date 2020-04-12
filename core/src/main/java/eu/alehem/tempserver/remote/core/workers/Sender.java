@@ -30,77 +30,6 @@ public class Sender implements Runnable {
     this.properties = properties;
   }
 
-  @Override
-  public void run() {
-    try {
-      queue.setRemoveLock(true);
-      final Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
-
-      if (temperatures.isEmpty()) {
-        queue.setRemoveLock(false);
-        return;
-      }
-
-      final Tempserver.ServerMessage serverMessage =
-          Tempserver.ServerMessage.newBuilder()
-              .setRemoteId(properties.getRemoteId().toString())
-              .setRemoteSerial(mySerial)
-              .addAllMeasurements(makeProtoMessages(temperatures))
-              .build();
-
-      final Tempserver.ServerResponse response;
-      try {
-        response = sendToServer(serverMessage.toByteArray());
-      } catch (ServerCommsFailedException e) {
-        log.warn("Server communication failed", e);
-        queue.setRemoveLock(false);
-        return;
-      }
-
-      if (response.getSaveSuccess()) {
-        if (properties.isVerbose()) log.info("Server response: " + response.getMessage());
-        if (properties.isVerbose()) log.info("Removing temperatures from queue");
-        queue.setRemoveLock(false);
-        queue.removeTemperaturesById(
-            response.getMeasurementIdsList().stream()
-                .filter(Sender::isValidUUID)
-                .map(UUID::fromString)
-                .collect(Collectors.toSet()));
-        if (properties.isVerbose()) log.info("Done sending batch");
-      } else {
-        log.warn("Server rejected transaction");
-        log.warn("Server status: " + response.getResponseCode());
-        log.warn("Server message: " + response.getMessage());
-      }
-    } catch (Exception e) {
-      log.warn("Sender crashed with exception!", e);
-    }
-  }
-
-  private Tempserver.ServerResponse sendToServer(final byte[] data)
-      throws ServerCommsFailedException {
-    try {
-      if (properties.isVerbose()) log.info("Sending to server");
-      HttpClient client = HttpClientBuilder.create().build();
-      HttpPost httpPost = new HttpPost(properties.getServerAddress());
-
-      ByteArrayEntity entity =
-          new ByteArrayEntity(data, ContentType.create("application/x-protobuf"));
-      httpPost.setEntity(entity);
-      HttpResponse response = client.execute(httpPost);
-
-      if (response.getStatusLine().getStatusCode() != 200) {
-        log.warn("Got status code: " + response.getStatusLine().getStatusCode());
-        throw new ServerCommsFailedException();
-      }
-
-      return Tempserver.ServerResponse.parseFrom(response.getEntity().getContent());
-    } catch (ServerCommsFailedException | IOException e) {
-      log.warn("Failed to save temperature to server.", e);
-      throw new ServerCommsFailedException();
-    }
-  }
-
   private static Set<Tempserver.Measurement> makeProtoMessages(
       final Set<Temperature> temperatures) {
     return temperatures.stream()
@@ -127,6 +56,79 @@ public class Sender implements Runnable {
       return true;
     } catch (IllegalArgumentException e) {
       return false;
+    }
+  }
+
+  @Override
+  public void run() {
+    try {
+      queue.setRemoveLock(true);
+      final Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
+
+      if (temperatures.isEmpty()) {
+        queue.setRemoveLock(false);
+        return;
+      }
+
+      final Tempserver.ServerMessage serverMessage =
+          Tempserver.ServerMessage.newBuilder()
+              .setRemoteId(properties.getRemoteId().toString())
+              .setRemoteSerial(mySerial)
+              .addAllMeasurements(makeProtoMessages(temperatures))
+              .build();
+
+      final Tempserver.ServerResponse response;
+
+      try {
+        response = sendToServer(serverMessage.toByteArray());
+      } catch (ServerCommsFailedException e) {
+        log.warn("Server communication failed", e);
+        queue.setRemoveLock(false);
+        return;
+      }
+
+      if (response.getSaveSuccess()) {
+        if (properties.isVerbose()) log.info("Server response: " + response.getMessage());
+        if (properties.isVerbose()) log.info("Removing temperatures from queue");
+        queue.setRemoveLock(false);
+        queue.removeTemperaturesById(
+            response.getMeasurementIdsList().stream()
+                .filter(Sender::isValidUUID)
+                .map(UUID::fromString)
+                .collect(Collectors.toSet()));
+        if (properties.isVerbose()) log.info("Done sending batch");
+      } else {
+        log.warn("Server rejected transaction");
+        log.warn("Server status: " + response.getResponseCode());
+        log.warn("Server message: " + response.getMessage());
+      }
+    } catch (Exception e) {
+      log.warn("Sender crashed with exception!", e);
+    }
+    queue.setRemoveLock(false);
+  }
+
+  private Tempserver.ServerResponse sendToServer(final byte[] data)
+      throws ServerCommsFailedException {
+    try {
+      if (properties.isVerbose()) log.info("Sending to server");
+      HttpClient client = HttpClientBuilder.create().build();
+      HttpPost httpPost = new HttpPost(properties.getServerAddress());
+
+      ByteArrayEntity entity =
+          new ByteArrayEntity(data, ContentType.create("application/x-protobuf"));
+      httpPost.setEntity(entity);
+      HttpResponse response = client.execute(httpPost);
+
+      if (response.getStatusLine().getStatusCode() != 200) {
+        log.warn("Got status code: " + response.getStatusLine().getStatusCode());
+        throw new ServerCommsFailedException();
+      }
+
+      return Tempserver.ServerResponse.parseFrom(response.getEntity().getContent());
+    } catch (ServerCommsFailedException | IOException e) {
+      log.warn("Failed to save temperature to server.", e);
+      throw new ServerCommsFailedException();
     }
   }
 }
