@@ -36,8 +36,9 @@ public class Sender implements Runnable {
         .map(
             t ->
                 Tempserver.Measurement.newBuilder()
+                    .setType(Tempserver.MeasurementType.TEMPERATURE)
                     .setId(t.getId().toString())
-                    .setTemperature(t.getTemperature())
+                    .setValue(t.getTemperature())
                     .setTimestamp(t.getMeasurementTime().toEpochMilli())
                     .setProbeserial(t.getProbeSerial())
                     .build())
@@ -70,14 +71,14 @@ public class Sender implements Runnable {
         return;
       }
 
-      final Tempserver.ServerMessage serverMessage =
-          Tempserver.ServerMessage.newBuilder()
+      final Tempserver.MeasurementSaveRequest serverMessage =
+          Tempserver.MeasurementSaveRequest.newBuilder()
               .setRemoteId(properties.getRemoteId().toString())
               .setRemoteSerial(mySerial)
               .addAllMeasurements(makeProtoMessages(temperatures))
               .build();
 
-      final Tempserver.ServerResponse response;
+      final Tempserver.MeasurementSaveResponse response;
 
       try {
         response = sendToServer(serverMessage.toByteArray());
@@ -88,7 +89,8 @@ public class Sender implements Runnable {
       }
 
       if (response.getSaveSuccess()) {
-        if (properties.isVerbose()) log.info("Server response: " + response.getMessage());
+        if (properties.isVerbose())
+          log.info("Server response: " + response.getResponseCode().toString());
         if (properties.isVerbose()) log.info("Removing temperatures from queue");
         queue.setRemoveLock(false);
         queue.removeTemperaturesById(
@@ -100,7 +102,7 @@ public class Sender implements Runnable {
       } else {
         log.warn("Server rejected transaction");
         log.warn("Server status: " + response.getResponseCode());
-        log.warn("Server message: " + response.getMessage());
+        log.warn("Server message: " + response.getResponseCode().toString());
       }
     } catch (Exception e) {
       log.warn("Sender crashed with exception!", e);
@@ -108,7 +110,7 @@ public class Sender implements Runnable {
     queue.setRemoveLock(false);
   }
 
-  private Tempserver.ServerResponse sendToServer(final byte[] data)
+  private Tempserver.MeasurementSaveResponse sendToServer(final byte[] data)
       throws ServerCommsFailedException {
     try {
       if (properties.isVerbose()) log.info("Sending to server");
@@ -125,7 +127,7 @@ public class Sender implements Runnable {
         throw new ServerCommsFailedException();
       }
 
-      return Tempserver.ServerResponse.parseFrom(response.getEntity().getContent());
+      return Tempserver.MeasurementSaveResponse.parseFrom(response.getEntity().getContent());
     } catch (ServerCommsFailedException | IOException e) {
       log.warn("Failed to save temperature to server.", e);
       throw new ServerCommsFailedException();
