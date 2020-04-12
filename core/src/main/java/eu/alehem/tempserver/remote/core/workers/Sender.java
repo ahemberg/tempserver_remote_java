@@ -101,8 +101,7 @@ public class Sender implements Runnable {
         if (properties.isVerbose()) log.info("Done sending batch");
       } else {
         log.warn("Server rejected transaction");
-        log.warn("Server status: " + response.getResponseCode());
-        log.warn("Server message: " + response.getResponseCode().toString());
+        log.warn("Server response: " + response.getResponseCode());
       }
     } catch (Exception e) {
       log.warn("Sender crashed with exception!", e);
