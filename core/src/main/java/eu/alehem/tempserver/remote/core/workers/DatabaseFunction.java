@@ -20,14 +20,8 @@ import java.util.stream.Collectors;
 public class DatabaseFunction
     implements Function<Set<Tempserver.Measurement>, Set<Tempserver.Measurement>> {
 
-  private static final int MAX_QUEUE_LEN;
-  private static final boolean IS_VERBOSE;
-
-  static {
-    // TODO read from properties on boot
-    MAX_QUEUE_LEN = 10;
-    IS_VERBOSE = true;
-  }
+  // TODO read from properties on boot
+  private static final int MAX_QUEUE_LEN = 10;
 
   @Override
   public Set<Tempserver.Measurement> apply(final Set<Tempserver.Measurement> measurements) {
@@ -66,14 +60,13 @@ public class DatabaseFunction
 
   private Set<Tempserver.Measurement> getAndRemove(final int numberToGet) {
     try {
-      if (IS_VERBOSE) log.info("Populating queue from db");
+      log.debug("Populating queue from db");
       final Set<Tempserver.Measurement> measurements = DatabaseManager.getMeasurements(numberToGet);
       DatabaseManager.deleteMeasurements(
           measurements.stream().map(Tempserver.Measurement::getId).collect(Collectors.toSet()));
       final int entriesInDb = DatabaseManager.countMeasurementsInDb();
-      if (IS_VERBOSE) {
-        log.info("Successfully populated from db. DB now has " + entriesInDb + " entries");
-      }
+      log.debug("Successfully populated from db. DB now has " + entriesInDb + " entries");
+
       return measurements;
     } catch (SQLException | InvalidProtocolBufferException e) {
       log.warn("Failed to get from database", e);
