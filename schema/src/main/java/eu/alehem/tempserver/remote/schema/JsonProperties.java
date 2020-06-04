@@ -11,7 +11,7 @@ import java.util.UUID;
 public final class JsonProperties {
 
   @SerializedName("remote_id")
-  private final UUID remoteId;
+  private final String remoteId;
 
   @SerializedName("server_address")
   private final String serverAddress;
