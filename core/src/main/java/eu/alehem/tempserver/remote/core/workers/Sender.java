@@ -1,11 +1,9 @@
 package eu.alehem.tempserver.remote.core.workers;
 
-import eu.alehem.tempserver.remote.core.TempQueue;
-import eu.alehem.tempserver.remote.core.Temperature;
 import eu.alehem.tempserver.remote.core.exceptions.ServerCommsFailedException;
-import eu.alehem.tempserver.remote.core.properties.SenderProperties;
 import eu.alehem.tempserver.schema.proto.Tempserver;
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -14,107 +12,58 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
-@Slf4j
-public class Sender implements Runnable {
+@Log4j2
+@AllArgsConstructor
+public class Sender implements Function<Set<Tempserver.Measurement>, Set<String>> {
 
   private final String mySerial;
-  private final SenderProperties properties;
-  private final TempQueue queue = TempQueue.getInstance();
-
-  public Sender(final String mySerial, final SenderProperties properties) {
-    this.mySerial = mySerial;
-    this.properties = properties;
-  }
-
-  private static Set<Tempserver.Measurement> makeProtoMessages(
-      final Set<Temperature> temperatures) {
-    return temperatures.stream()
-        .map(
-            t ->
-                Tempserver.Measurement.newBuilder()
-                    .setType(Tempserver.MeasurementType.TEMPERATURE)
-                    .setId(t.getId().toString())
-                    .setValue(t.getTemperature())
-                    .setTimestamp(t.getMeasurementTime().toEpochMilli())
-                    .setProbeserial(t.getProbeSerial())
-                    .build())
-        .collect(Collectors.toSet());
-  }
-
-  /**
-   * Checks whether a string is a valid UUID or not
-   *
-   * @param candidate String to check
-   * @return Boolean true if valid false otherwise.
-   */
-  private static boolean isValidUUID(final String candidate) {
-    try {
-      UUID.fromString(candidate);
-      return true;
-    } catch (IllegalArgumentException e) {
-      return false;
-    }
-  }
+  private final String remoteId;
+  private final String serverAddress;
 
   @Override
-  public void run() {
+  public Set<String> apply(Set<Tempserver.Measurement> measurements) {
     try {
-      queue.setRemoveLock(true);
-      final Set<Temperature> temperatures = queue.getN(properties.getBatchSize());
-
-      if (temperatures.isEmpty()) {
-        queue.setRemoveLock(false);
-        return;
-      }
-
       final Tempserver.MeasurementSaveRequest serverMessage =
           Tempserver.MeasurementSaveRequest.newBuilder()
-              .setRemoteId(properties.getRemoteId().toString())
+              .setRemoteId(remoteId)
               .setRemoteSerial(mySerial)
-              .addAllMeasurements(makeProtoMessages(temperatures))
+              .addAllMeasurements(measurements)
               .build();
 
-      final Tempserver.MeasurementSaveResponse response;
-
       try {
-        response = sendToServer(serverMessage.toByteArray());
-      } catch (ServerCommsFailedException e) {
-        log.warn("Server communication failed", e);
-        queue.setRemoveLock(false);
-        return;
-      }
+        final Tempserver.MeasurementSaveResponse response =
+            sendToServer(serverMessage.toByteArray());
+        if (response.getSaveSuccess()) {
+          log.debug("Server response: " + response.getResponseCode().toString());
+          log.debug("Done sending batch");
 
-      if (response.getSaveSuccess()) {
-        if (properties.isVerbose())
-          log.info("Server response: " + response.getResponseCode().toString());
-        if (properties.isVerbose()) log.info("Removing temperatures from queue");
-        queue.setRemoveLock(false);
-        queue.removeTemperaturesById(
-            response.getMeasurementIdsList().stream()
-                .filter(Sender::isValidUUID)
-                .map(UUID::fromString)
-                .collect(Collectors.toSet()));
-        if (properties.isVerbose()) log.info("Done sending batch");
-      } else {
-        log.warn("Server rejected transaction");
-        log.warn("Server response: " + response.getResponseCode());
+        } else {
+          log.warn("Server rejected transaction");
+          log.warn("Server response: " + response.getResponseCode());
+        }
+        return new HashSet<>(response.getMeasurementIdsList());
+      } catch (ServerCommsFailedException e) {
+        log.warn("Server communication failed");
+        log.debug("Exception", e);
+        return new HashSet<>();
       }
     } catch (Exception e) {
       log.warn("Sender crashed with exception!", e);
+      return new HashSet<>();
     }
-    queue.setRemoveLock(false);
   }
 
+  // TODO Think about rewriting this
   private Tempserver.MeasurementSaveResponse sendToServer(final byte[] data)
       throws ServerCommsFailedException {
     try {
-      if (properties.isVerbose()) log.info("Sending to server");
+      log.debug("Sending to server");
       HttpClient client = HttpClientBuilder.create().build();
-      HttpPost httpPost = new HttpPost(properties.getServerAddress());
+      HttpPost httpPost = new HttpPost(serverAddress);
 
       ByteArrayEntity entity =
           new ByteArrayEntity(data, ContentType.create("application/x-protobuf"));

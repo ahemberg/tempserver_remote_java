@@ -1,26 +1,36 @@
 package eu.alehem.tempserver.remote.core;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import eu.alehem.tempserver.schema.proto.Tempserver;
+
 import java.sql.*;
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 public final class DatabaseManager {
 
-  private static final String DEFAULT_DATABASE_URL = "jdbc:sqlite:tempremote.db";
-  private static final String DATABASE_SCHEMA =
-      "CREATE TABLE IF NOT EXISTS saved_temperatures"
-          + "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-          + " temp_id TEXT NOT NULL,"
-          + " probe TEXT NOT NULL,"
-          + " temp DOUBLE NOT NULL,"
-          + " timestamp INTEGER NOT NULL,"
-          + " unique (probe, temp, timestamp) )";
+  private DatabaseManager() {}
 
-  private DatabaseManager() throws Exception {
-    throw new Exception("Utility class, not to be instantiated");
+  private static final String DEFAULT_DATABASE_URL = "jdbc:sqlite:tempremote-new.db";
+  private static final String SAVE_QUERY =
+      "INSERT OR IGNORE INTO measurements (measurement_id, data) VALUES (?, ?)";
+  private static final String GET_QUERY = "SELECT * FROM measurements LIMIT ?";
+  private static final String DELETE_QUERY = "DELETE FROM measurements WHERE measurement_id = ?";
+
+  private static final String DATABASE_SCHEMA =
+      "CREATE TABLE IF NOT EXISTS measurements"
+          + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+          + " measurement_id STRING NOT NULL,"
+          + " data BLOB NOT NULL,"
+          + " unique (measurement_id, data))";
+
+  public static void createDataBaseIfNotExists() throws SQLException {
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
+    Statement stmt = c.createStatement();
+    stmt.executeUpdate(DATABASE_SCHEMA);
+    stmt.close();
+    c.close();
   }
 
   private static <T> Consumer<T> throwingConsumerWrapper(
@@ -34,115 +44,51 @@ public final class DatabaseManager {
     };
   }
 
-  public static void createDataBaseIfNotExists() throws SQLException {
-    createDataBaseIfNotExists(DEFAULT_DATABASE_URL);
-  }
-
-  static void createDataBaseIfNotExists(String databaseUrl) throws SQLException {
-    Connection c = DriverManager.getConnection(databaseUrl);
-    Statement stmt = c.createStatement();
-    stmt.executeUpdate(DATABASE_SCHEMA);
-    stmt.close();
-    c.close();
-  }
-
-  public static void insertTemperatures(final Set<Temperature> temperatures) throws SQLException {
-    insertTemperatures(temperatures, DEFAULT_DATABASE_URL);
-  }
-
-  static void insertTemperatures(final Set<Temperature> temperatures, final String databaseUrl)
+  public static void insertMeasurements(final Set<Tempserver.Measurement> measurements)
       throws SQLException {
-    Connection c = DriverManager.getConnection(databaseUrl);
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
+    PreparedStatement stmt = c.prepareStatement(SAVE_QUERY);
 
-    Statement stmt = c.createStatement();
-
-    temperatures.forEach(
+    measurements.forEach(
         throwingConsumerWrapper(
-            t ->
-                stmt.addBatch(
-                    String.format(
-                        "INSERT OR IGNORE INTO saved_temperatures(temp_id, probe, temp, timestamp) VALUES(\"%s\",\"%s\", %f, %d);",
-                        t.getId().toString(),
-                        t.getProbeSerial(),
-                        t.getTemperature(),
-                        t.getMeasurementTimeStamp()))));
-
+            m -> {
+              stmt.setString(1, m.getId());
+              stmt.setBytes(2, m.toByteArray());
+              stmt.addBatch();
+            }));
     stmt.executeBatch();
     stmt.close();
     c.close();
   }
 
-  public static Set<Temperature> getTemperatures(final int limit) throws SQLException {
-    return getTemperatures(limit, DEFAULT_DATABASE_URL);
-  }
+  // TODO if one meaurement is corrupt then nothing will be returned. Might lock up the database.
+  // Either just ignore the failed measurements or run a database-cleaner that removes such entries.
+  public static Set<Tempserver.Measurement> getMeasurements(final int numToGet)
+      throws SQLException, InvalidProtocolBufferException {
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
+    PreparedStatement stmt = c.prepareStatement(GET_QUERY);
+    stmt.setInt(1, numToGet);
+    stmt.execute();
+    ResultSet resultSet = stmt.getResultSet();
 
-  static Set<Temperature> getTemperatures(final int limit, final String database_url)
-      throws SQLException {
-    Connection c = DriverManager.getConnection(database_url);
-
-    String query = "SELECT * FROM saved_temperatures LIMIT " + limit;
-
-    Statement stmt = c.createStatement();
-    stmt.execute(query);
-    ResultSet res = stmt.getResultSet();
-
-    Set<Temperature> temperatures = new HashSet<>();
-    while (res.next()) {
-      temperatures.add(
-          new Temperature(
-              UUID.fromString(res.getString("temp_id")),
-              res.getString("probe"),
-              res.getDouble("temp"),
-              Instant.ofEpochSecond(res.getInt("timestamp"))));
+    final Set<Tempserver.Measurement> measurements = new HashSet<>();
+    while (resultSet.next()) {
+      final byte[] bytes = resultSet.getBytes("data");
+      measurements.add(Tempserver.Measurement.parseFrom(bytes));
     }
-    res.close();
-    stmt.close();
-    c.close();
-    return temperatures;
+    return measurements;
   }
 
-  // TODO: It should be safe to only consider temp_id.
-  public static void deleteTemperature(Temperature temperature) throws SQLException {
-    deleteTemperature(temperature, DEFAULT_DATABASE_URL);
-  }
+  public static void deleteMeasurements(final Set<String> idsToDelete) throws SQLException {
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
+    PreparedStatement stmt = c.prepareStatement(DELETE_QUERY);
 
-  static void deleteTemperature(Temperature temperature, String databaseUrl) throws SQLException {
-    Connection c = DriverManager.getConnection(databaseUrl);
-
-    String query =
-        String.format(
-            "DELETE FROM saved_temperatures WHERE temp_id=\"%s\" AND probe=\"%s\" AND temp=%f AND timestamp=%d",
-            temperature.getId(),
-            temperature.getProbeSerial(),
-            temperature.getTemperature(),
-            temperature.getMeasurementTimeStamp());
-
-    Statement stmt = c.createStatement();
-    stmt.execute(query);
-    stmt.close();
-    c.close();
-  }
-
-  public static void deleteTemperatures(Set<Temperature> temperatures) throws SQLException {
-    deleteTemperatures(temperatures, DEFAULT_DATABASE_URL);
-  }
-
-  static void deleteTemperatures(Set<Temperature> temperatures, String databaseUrl)
-      throws SQLException {
-    Connection c = DriverManager.getConnection(databaseUrl);
-
-    Statement stmt = c.createStatement();
-
-    temperatures.forEach(
+    idsToDelete.forEach(
         throwingConsumerWrapper(
-            t ->
-                stmt.addBatch(
-                    String.format(
-                        "DELETE FROM saved_temperatures WHERE temp_id=\"%s\" AND probe=\"%s\" AND temp=%f AND timestamp=%d",
-                        t.getId(),
-                        t.getProbeSerial(),
-                        t.getTemperature(),
-                        t.getMeasurementTimeStamp()))));
+            id -> {
+              stmt.setString(1, id);
+              stmt.addBatch();
+            }));
 
     stmt.executeBatch();
     stmt.close();
@@ -150,13 +96,9 @@ public final class DatabaseManager {
   }
 
   public static int countMeasurementsInDb() throws SQLException {
-    return countMeasurementsInDb(DEFAULT_DATABASE_URL);
-  }
+    Connection c = DriverManager.getConnection(DEFAULT_DATABASE_URL);
 
-  static int countMeasurementsInDb(String databaseUrl) throws SQLException {
-    Connection c = DriverManager.getConnection(databaseUrl);
-
-    String query = "SELECT COUNT(*) FROM saved_temperatures";
+    String query = "SELECT COUNT(*) FROM measurements";
 
     Statement stmt = c.createStatement();
     stmt.execute(query);
