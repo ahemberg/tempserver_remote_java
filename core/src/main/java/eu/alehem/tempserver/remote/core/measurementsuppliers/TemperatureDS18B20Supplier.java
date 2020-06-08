@@ -13,15 +13,18 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * A temperature supplier for the DS18B20 temperature sensor
+ */
 @Log4j2
-public class TemperatureSupplier implements MeasurementSupplier<Set<Tempserver.Measurement>> {
+public class TemperatureDS18B20Supplier implements MeasurementSupplier<Set<Tempserver.Measurement>> {
 
   private static final List<W1Device> PROBES = getTempProbes();
 
   @Override
   public Set<Tempserver.Measurement> get() {
     log.info("Reading temperature");
-    return PROBES.stream().map(TemperatureSupplier::getTemperature).collect(Collectors.toSet());
+    return PROBES.stream().map(TemperatureDS18B20Supplier::getTemperature).collect(Collectors.toSet());
   }
 
   private static List<W1Device> getTempProbes() {
