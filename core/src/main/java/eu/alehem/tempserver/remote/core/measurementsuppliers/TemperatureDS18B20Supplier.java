@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * A temperature supplier for the DS18B20 temperature sensor
  */
 @Log4j2
-public class TemperatureDS18B20Supplier implements MeasurementSupplier<Set<Tempserver.Measurement>> {
+public class TemperatureDS18B20Supplier implements MeasurementSupplier {
 
   private static final List<W1Device> PROBES = getTempProbes();
 
