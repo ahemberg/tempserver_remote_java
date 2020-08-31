@@ -5,6 +5,7 @@ import com.pi4j.system.SystemInfo;
 import eu.alehem.tempserver.remote.core.argparser.ArgParser;
 import eu.alehem.tempserver.remote.core.argparser.Arguments;
 import eu.alehem.tempserver.remote.core.exceptions.InvalidArgumentsException;
+import eu.alehem.tempserver.remote.core.measurementsuppliers.TemperatureDS18B20Supplier;
 import eu.alehem.tempserver.remote.core.workers.DatabaseFunction;
 import eu.alehem.tempserver.remote.core.workers.Sender;
 import eu.alehem.tempserver.remote.core.workers.Worker;
@@ -55,7 +56,13 @@ public class Main {
 
     final Sender sender = new Sender(MY_SERIAL, remoteId, serverAddress);
     final DatabaseFunction dbFunc = new DatabaseFunction();
-    final Worker worker = new Worker(sender, dbFunc);
+
+    //TODO: Make this list of suppliers be generated from a parameter so that it is possible to choose which sensors
+    //to use.
+
+    final TemperatureDS18B20Supplier temperatureSupplier = new TemperatureDS18B20Supplier();
+
+    final Worker worker = new Worker(sender, dbFunc, temperatureSupplier);
 
     Runtime.getRuntime().addShutdownHook(new Thread(new Shutdown(worker)));
 

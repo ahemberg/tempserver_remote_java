@@ -1,6 +1,7 @@
 package eu.alehem.tempserver.remote.core.workers;
 
 import eu.alehem.tempserver.remote.core.DatabaseManager;
+import eu.alehem.tempserver.remote.core.measurementsuppliers.MeasurementSupplier;
 import eu.alehem.tempserver.remote.core.measurementsuppliers.TemperatureDS18B20Supplier;
 import eu.alehem.tempserver.schema.proto.Tempserver;
 import lombok.extern.log4j.Log4j2;
@@ -18,10 +19,12 @@ public class Worker implements Runnable {
   private static final Set<Tempserver.Measurement> measurementQueue = new HashSet<>();
   private final Sender sender;
   private final DatabaseFunction dbFunc;
+  private final MeasurementSupplier measurementSupplier;
 
-  public Worker(final Sender sender, final DatabaseFunction dbFunc) {
+  public Worker(final Sender sender, final DatabaseFunction dbFunc, final MeasurementSupplier measurementSupplier) {
     this.sender = sender;
     this.dbFunc = dbFunc;
+    this.measurementSupplier = measurementSupplier;
   }
 
   @Override
@@ -34,7 +37,7 @@ public class Worker implements Runnable {
     // Read temperature, join with current queue, backfill from db or pop and store in db,
     // overwrite current queue, send to server
     Set<String> savedTemperatureIds =
-        CompletableFuture.supplyAsync(new TemperatureDS18B20Supplier())
+        CompletableFuture.supplyAsync(measurementSupplier)
             .thenApply(
                 measurements -> {
                   log.debug("New measurements: " + measurements.size());
