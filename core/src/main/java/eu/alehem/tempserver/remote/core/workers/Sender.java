@@ -2,6 +2,10 @@ package eu.alehem.tempserver.remote.core.workers;
 
 import eu.alehem.tempserver.remote.core.exceptions.ServerCommsFailedException;
 import eu.alehem.tempserver.schema.proto.Tempserver;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpResponse;
@@ -10,11 +14,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClientBuilder;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Function;
 
 @Log4j2
 @AllArgsConstructor

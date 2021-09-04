@@ -9,6 +9,11 @@ import eu.alehem.tempserver.remote.core.workers.DatabaseFunction;
 import eu.alehem.tempserver.remote.core.workers.Sender;
 import eu.alehem.tempserver.remote.core.workers.Worker;
 import eu.alehem.tempserver.remote.schema.JsonProperties;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.CommandLine;
@@ -17,12 +22,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Log4j2
 public class Main {
