@@ -3,14 +3,13 @@ package eu.alehem.tempserver.remote.core.workers;
 import eu.alehem.tempserver.remote.core.DatabaseManager;
 import eu.alehem.tempserver.remote.core.measurementsuppliers.TemperatureDS18B20Supplier;
 import eu.alehem.tempserver.schema.proto.Tempserver;
-import lombok.extern.log4j.Log4j2;
-
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class Worker implements Runnable {

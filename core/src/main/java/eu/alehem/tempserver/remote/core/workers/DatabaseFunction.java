@@ -3,14 +3,13 @@ package eu.alehem.tempserver.remote.core.workers;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.alehem.tempserver.remote.core.DatabaseManager;
 import eu.alehem.tempserver.schema.proto.Tempserver;
-import lombok.extern.log4j.Log4j2;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Takes a set of temperatures to be sent and makes sure it has the correct size by adding or

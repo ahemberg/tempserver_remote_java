@@ -2,7 +2,6 @@ package eu.alehem.tempserver.remote.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.alehem.tempserver.schema.proto.Tempserver;
-
 import java.sql.*;
 import java.util.HashSet;
 import java.util.Set;
