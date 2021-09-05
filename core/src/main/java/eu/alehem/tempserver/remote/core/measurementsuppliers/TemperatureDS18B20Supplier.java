@@ -21,9 +21,10 @@ public class TemperatureDS18B20Supplier
 
   @Override
   public Set<Tempserver.Measurement> get() {
-    log.info("Reading temperature");
+    log.debug("Reading temperature");
     return PROBES.stream()
         .map(TemperatureDS18B20Supplier::getTemperature)
+        .peek(measurement -> log.debug(String.format("Created measurement:\n%s", measurement.toString())))
         .collect(Collectors.toSet());
   }
 
