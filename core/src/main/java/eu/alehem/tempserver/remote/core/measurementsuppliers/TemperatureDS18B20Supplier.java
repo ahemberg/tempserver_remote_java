@@ -24,7 +24,7 @@ public class TemperatureDS18B20Supplier
     log.debug("Reading temperature");
     return PROBES.stream()
         .map(TemperatureDS18B20Supplier::getTemperature)
-        .peek(measurement -> log.debug(String.format("Read: %s", measurement.toString())))
+        .peek(measurement -> log.debug(String.format("Created measurement:\n%s", measurement.toString())))
         .collect(Collectors.toSet());
   }
 
