@@ -14,7 +14,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class Worker implements Runnable {
 
-  private static final Set<Tempserver.Measurement> measurementQueue = new HashSet<>();
+  //private static final Set<Tempserver.Measurement> measurementQueue = new HashSet<>();
   private final Sender sender;
   private final DatabaseFunction dbFunc;
 
@@ -37,17 +37,18 @@ public class Worker implements Runnable {
             .thenApply(
                 measurements -> {
                   log.debug("New measurements: " + measurements.size());
-                  log.debug("Existing in queue: " + measurementQueue.size());
-                  return Stream.concat(measurements.stream(), measurementQueue.stream())
-                      .collect(Collectors.toSet());
+                  //log.debug("Existing in queue: " + measurementQueue.size());
+                  //return Stream.concat(measurements.stream(), measurementQueue.stream())
+                  //    .collect(Collectors.toSet());
+                  return measurements;
                 })
-            .thenApply(dbFunc)
+            //.thenApply(dbFunc)
             .thenApply(
                 measurements -> {
-                  log.debug("Measurements in queue: " + measurementQueue.size());
+                  //log.debug("Measurements in queue: " + measurementQueue.size());
                   log.debug("Measurements from db: " + measurements.size());
-                  measurementQueue.clear();
-                  measurementQueue.addAll(measurements);
+                  //measurementQueue.clear();
+                  //measurementQueue.addAll(measurements);
                   return measurements;
                 })
             .thenApply(sender)
@@ -59,24 +60,24 @@ public class Worker implements Runnable {
     // Remove Ids in this set from the queue
     removeTemperaturesById(savedTemperatureIds);
     // Done
-    log.debug("Worker done. Queue now contains " + measurementQueue.size() + " entries");
+    //log.debug("Worker done. Queue now contains " + measurementQueue.size() + " entries");
   }
 
   public void terminate() {
-    try {
+    //try {
       log.debug("Dumping measurement to database");
-      DatabaseManager.insertMeasurements(measurementQueue);
-      measurementQueue.forEach(measurement -> log.debug(measurement.getId()));
-    } catch (SQLException e) {
+      //DatabaseManager.insertMeasurements(measurementQueue);
+      //measurementQueue.forEach(measurement -> log.debug(measurement.getId()));
+    //} catch (SQLException e) {
       log.error("Failed to save queue, data was lost :(");
-    }
+    //}
   }
 
   public void removeTemperaturesById(final Set<String> ids) {
-    final Set<Tempserver.Measurement> temperaturesToRemove =
-        measurementQueue.stream()
-            .filter(m -> ids.stream().anyMatch(id -> id.equals(m.getId())))
-            .collect(Collectors.toSet());
-    measurementQueue.removeAll(temperaturesToRemove);
+    //final Set<Tempserver.Measurement> temperaturesToRemove =
+        //measurementQueue.stream()
+        //    .filter(m -> ids.stream().anyMatch(id -> id.equals(m.getId())))
+        //    .collect(Collectors.toSet());
+    //measurementQueue.removeAll(temperaturesToRemove);
   }
 }
